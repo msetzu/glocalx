@@ -1,0 +1,1158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.1" />
+<title>models API documentation</title>
+<meta name="description" content="Models to score, mainly rules. A_ model should implement the `Unit` interface." />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>models</code></h1>
+</header>
+<section id="section-intro">
+<p>Models to score, mainly rules. A_ model should implement the <code><a title="models.Unit" href="#models.Unit">Unit</a></code> interface.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;Models to score, mainly rules. A_ model should implement the `Unit` interface.&#34;&#34;&#34;
+import json
+from copy import deepcopy
+from math import floor
+
+from scipy.spatial.distance import euclidean
+from numpy import sign, argwhere, inf, array
+
+
+__all__ = [&#39;Unit&#39;, &#39;Vector&#39;, &#39;Rule&#39;]
+
+
+class Unit:
+    &#34;&#34;&#34;General computational unit with a `predict` method.&#34;&#34;&#34;
+
+    def __hash__(self):
+        return id(self)
+
+    def __repr__(self):
+        return &#39;None&#39;
+
+    def __str__(self):
+        return &#39;Empty&#39;
+
+    def predict(self, x):
+        &#34;&#34;&#34;Evaluate any.
+
+        Args:
+            x (object): The object to evaluate.
+        Returns:
+              None
+        &#34;&#34;&#34;
+        return None
+
+
+class Vector(Unit):
+    &#34;&#34;&#34;Vector unit.&#34;&#34;&#34;
+
+    def __init__(self, vector, position, distance=euclidean):
+        self.__vector = vector
+        self.__dimension = len(vector)
+        self.__position = position
+        self.__eval = distance
+
+    def __len__(self):
+        return self.__dimension
+
+    def __hash__(self):
+        return hash(self.__vector)
+
+    def __getitem__(self, item):
+        return self.__vector[item]
+
+    def __add__(self, other):
+        sum_ = self.__vector + other.__vector
+        return sum_
+
+    def __sub__(self, other):
+        sub_ = self.__vector - other.__vector
+        return sub_
+
+    def __mul__(self, other):
+        mul_ = self.__vector * other.__vector
+        return mul_
+
+    def __repr__(self):
+        return repr(self.__vector) + &#39;\n&#39; \
+               + repr(self.__dimension) + &#39;\n&#39; \
+               + repr(self.__position) + &#39;\n&#39;
+
+    def __str__(self):
+        return &#39;Vector: &#39; + repr(self.__vector) + &#39;\n&#39; \
+               + &#39;Dimensionality: &#39; + repr(self.__dimension) + &#39;\n&#39; \
+               + &#39;Position: &#39; + repr(self.__position) + &#39;\n&#39;
+
+    def predict(self, x):
+        return self.__eval(x, self.__vector)
+
+
+class Rule(Unit):
+    &#34;&#34;&#34;A_ logical rule in conjunctive form.&#34;&#34;&#34;
+
+    def __init__(self, premises=None, consequence=None, distance=euclidean, names=None):
+        &#34;&#34;&#34;
+        Default rule with the given premises and consequence.
+
+        Args:
+            premises (dict): Dictionary {feature -&gt; premise} holding the premise for @feature. Defaults to the empty
+                                dictionary.
+            consequence (int): Outcome of the rule. Defaults to None.
+            distance (function): Function Rule x Record -&gt; float to evaluate the centrality of a record
+                                w.r.t. the rule. Defaults to Euclidean distance.
+            names (list): Names of categorical variables. Set of sets, each set is a group of features on the same
+            variable.
+        &#34;&#34;&#34;
+        self.features = set(premises.keys())
+        self.premises = premises if premises is not None else dict()
+        self.consequence = consequence
+        self.distance = distance
+        self.names = names
+
+    @classmethod
+    def fromarrays(cls, features=None, thresholds=None, consequence=None, path=None):
+        &#34;&#34;&#34;
+        Args:
+            features (list): The list of features.
+            thresholds (list): The list of thresholds per node in the path.
+            consequence (list): Rules consequences.
+            path (list): Path followed by the rules.
+        &#34;&#34;&#34;
+        if thresholds is None:
+            raise ValueError(&#39;Missing thresholds&#39;)
+        if consequence is None:
+            raise ValueError(&#39;Missing consequence&#39;)
+        if path is None:
+            raise ValueError(&#39;Missing path&#39;)
+        if features is None:
+            raise ValueError(&#39;Missing features&#39;)
+
+        __premises = {}
+        __features = features
+        __consequence = int(consequence)
+
+        # thresholds_ = thresholds[:-1]
+        indices_per_feature = {feature: argwhere(__features == feature).flatten()
+                               for feature in __features}
+        directions_per_feature = {f: [sign(path[k + 1]) for k in indices_per_feature[f] if k &lt; len(path) - 1]
+                                  for f in __features}
+
+        for feature in __features:
+            if len(indices_per_feature[feature]) == 1:
+                try:
+                    threshold = thresholds[indices_per_feature[feature][0]]
+                except IndexError as e:
+                    print(len(features), len(thresholds), len(indices_per_feature), feature, consequence, len(path))
+                    print(features, thresholds, indices_per_feature, feature, consequence, path)
+                    raise e
+                __premises[feature] = (-inf, threshold) if directions_per_feature[feature][0] &lt; 0 else (threshold, inf)
+            else:
+                lower_bounds_idx = [index for index, direction in zip(indices_per_feature[feature],
+                                                                      directions_per_feature[feature])
+                                    if direction &gt; 0]
+                upper_bounds_idx = [index for index, direction in zip(indices_per_feature[feature],
+                                                                      directions_per_feature[feature])
+                                    if direction &lt; 0]
+                lower_bounds, upper_bounds = (array([thresholds[lower_idx] for lower_idx in lower_bounds_idx]),
+                                              array([thresholds[upper_idx] for upper_idx in upper_bounds_idx]))
+
+                if lower_bounds.shape[0] &gt; 0 and upper_bounds.shape[0] &gt; 0:
+                    __premises[feature] = (max(lower_bounds), min(upper_bounds))
+                elif lower_bounds.shape[0] == 0:
+                    __premises[feature] = (-inf, min(upper_bounds))
+                elif upper_bounds.shape[0] == 0:
+                    __premises[feature] = (max(lower_bounds), +inf)
+
+        return cls(__premises, __consequence)
+
+    def __len__(self):
+        if not hasattr(self, &#39;names&#39;) or self.names is None:
+            rule_len = len(self.premises)
+        else:
+            # Categorical names have the form &#39;variable=value&#39;, hence create a set of &#39;variable&#39; prefixes
+            features_names = set([self.names[f].split(&#39;=&#39;)[0] if &#39;=&#39; in self.names[f] else self.names[f]
+                                  for f in self.premises.keys()])
+            rule_len = len(features_names)
+
+        return rule_len
+
+    def __repr__(self):
+        return str(self.premises) + &#39;\n&#39; + str(self.consequence)
+
+    def __str__(self):
+        str_ = &#39;{\n&#39;
+        for k in sorted(self.features):
+            feature_name = self.names[k]
+            str_ = str_ + &#39;\t&#39; + feature_name + &#39;: &#39; + str(self.premises[k]) + &#39;\n&#39;
+        str_ += &#39;\n\tlabel: &#39; + str(self.consequence) + &#39;\n&#39;
+        str_ += &#39;}\n&#39;
+
+        return str_
+
+    def __eq__(self, other):
+        &#34;&#34;&#34;True iff the `other` has the same ranges of this.&#34;&#34;&#34;
+        return self.premises == other.premises and self.consequence == other.consequence
+
+    def __hash__(self):
+        return hash(tuple([(k, v1, v2, self.consequence) for k, (v1, v2) in self.premises.items()]))
+
+    def __contains__(self, item):
+        return item in self.premises
+
+    def __getitem__(self, item):
+        if item not in self.premises:
+            raise KeyError(str(item) + &#39; not in rule&#39;)
+        return self.premises[item]
+
+    def __setitem__(self, key, value):
+        self.premises[key] = value
+        return self
+
+    def __iter__(self):
+        for el in self.premises.items():
+            yield el
+
+    def __delitem__(self, key):
+        del self.premises[key]
+        return self
+
+    def __copy__(self):
+        cop_rule = Rule(self.premises, self.consequence)
+
+        return cop_rule
+
+    def __deepcopy__(self, memodict=None):
+        cop_rule = Rule(deepcopy(self.premises), deepcopy(self.consequence))
+
+        return cop_rule
+
+    def json(self):
+        &#34;&#34;&#34;
+        Encode this object in a JSON dictionary.
+
+        Returns:
+            dict: The JSON dictionary representation of this object.
+        &#34;&#34;&#34;
+        json_dict = {int(k): [v1, v2] for k, (v1, v2) in self.premises.items()}
+        json_dict[&#39;label&#39;] = int(self.consequence)
+
+        return json_dict
+
+    @classmethod
+    def from_json(cls, json_file, names=None):
+        &#34;&#34;&#34;
+        Read rules from json_file.
+
+        Args:
+            json_file (str): Path of the json file.
+            names (list): Features names, if any, None otherwise. Defaults to None.
+        Returns:
+            list: List of rules in json_file.
+        &#34;&#34;&#34;
+        with open(json_file, &#39;r&#39;) as log:
+            jsonized_rules = json.load(log)
+            premises = [{int(k): v for k, v in dic.items() if k != &#39;consequence&#39; and k != &#39;label&#39;}
+                        for dic in jsonized_rules]
+            consequences = [dic[&#39;consequence&#39;] if &#39;consequence&#39; in dic else dic[&#39;label&#39;] for dic in jsonized_rules]
+        rules = [Rule(premises=premise, consequence=consequence)
+                 for premise, consequence in zip(premises, consequences)]
+        if names is not None:
+            for r in rules:
+                r.names = names
+
+        return rules
+
+    def to_dict(self):
+        &#34;&#34;&#34;
+        Compute the python dictionary associated with this rule.
+
+        Returns:
+            dict: Python dictionary.
+        &#34;&#34;&#34;
+        this_copy = deepcopy(self)
+        this_copy.premises[&#39;label&#39;] = self.consequence
+
+        return this_copy
+
+    def __invert__(self):
+        &#34;&#34;&#34;Negate rule by swapping its consequence. Defaults to (consequence + 1) % 2 if
+        @invert was not provided at construction time.
+
+        Returns:
+            Rule: Rule with the same premises and inverted consequence.
+        &#34;&#34;&#34;
+        neg_rule = deepcopy(self)
+        neg_rule.consequence = (self.consequence + 1) % 2
+
+        return neg_rule
+
+    def __add__(self, other):
+        &#34;&#34;&#34;Sum to rule according to the quasi-polyhedra union.
+
+        Args:
+            other (Rule): The rule to add.
+
+        Returns:
+            Rule: New rule with united premises and same consequence.
+                    Throws ValueError when discordant consequences are found.
+        &#34;&#34;&#34;
+        if self.consequence != other.consequence:
+            raise ValueError(&#39;Rules should have the same consequence&#39;)
+
+        sum_rule = Rule({}, self.consequence)
+        premises_in_common = {feature for feature in self.premises if feature in other.premises}
+        premises_exclusive = {feature for feature in self.premises if feature not in other.premises}
+
+        for f in premises_in_common:
+            sum_rule[f] = (min(self[f][0], other[f][0]), max(self[f][1], other[f][1]))
+        for f in premises_exclusive:
+            sum_rule[f] = self[f]
+        sum_rule.features = set(sum_rule.premises.keys())
+
+        return sum_rule
+
+    def __sub__(self, other):
+        &#34;&#34;&#34;Subtract to rule according to the quasi-polyhedra union.
+
+        Args:
+            other (Rule): The rule to subtract.
+
+        Returns:
+            set: New rule(s) with different premises and same consequence as self.
+        &#34;&#34;&#34;
+        premises_in_common = self.features &amp; other.features
+
+        negated_premises = {}
+        additional_rules_nr = 0
+        for f in premises_in_common:
+            self_a, self_b, other_a, other_b = self[f][0], self[f][1], other[f][0], other[f][1]
+
+            # strong included in the weak, split the weak in two
+            if self_a &lt;= other_a &lt;= other_b &lt;= self_b:
+                negated_premises[f] = [(self_a, other_a), (other_b, self_b)]
+                additional_rules_nr += 1
+            # weak shifted to the left
+            elif other_a &lt; self_a &lt; other_b &lt;= self_b:
+                negated_premises[f] = (other_b, self_b)
+            # weak shifted to the right
+            elif self_a &lt;= other_a &lt;= self_b &lt;= other_b:
+                negated_premises[f] = (self_a, other_a)
+            # weak included in strong
+            elif other_a &lt; self_a &lt;= self_b &lt;= other_b:
+                negated_premises[f] = None
+
+        new_rules = [Rule(premises={}, consequence=other.consequence)
+                     for _ in range(additional_rules_nr + 1)]
+
+        # Preserve features in the weak rule, but not in the strong
+        for f, val in other:
+            if f not in negated_premises:
+                for rule in new_rules:
+                    rule[f] = val
+                    rule.features.add(f)
+
+        # Cut according to the negated submissive ranges
+        for f in negated_premises.keys():
+            if f in negated_premises:
+                if negated_premises[f] is None:
+                    for rule in new_rules:
+                        if f in rule:
+                            del rule[f]
+                            rule.features = rule.features - {f}
+                elif isinstance(negated_premises[f], list):
+                    # First half of the rules with first value
+                    for rule in new_rules[:floor(additional_rules_nr / 2)]:
+                        rule[f] = negated_premises[f][0]
+                        rule.features.add(f)
+                    # Second half of the rules with second value
+                    for rule in new_rules[floor(additional_rules_nr / 2):]:
+                        rule[f] = negated_premises[f][1]
+                        rule.features.add(f)
+                else:
+                    for rule in new_rules:
+                        rule[f] = negated_premises[f]
+                        rule.features.add(f)
+
+        new_rules = set(new_rules)
+
+        return new_rules
+
+    def __and__(self, other):
+        &#34;&#34;&#34;Intersection between rules.&#34;&#34;&#34;
+        if not isinstance(other, Rule):
+            raise ValueError(&#39;Not a Rule&#39;)
+
+        r_minus_s, s_minus_r = self - other, other - self
+        rules = r_minus_s | s_minus_r
+
+        return self in rules and other in rules
+
+    def covers(self, x):
+        &#34;&#34;&#34;Does this rule cover x?
+
+        Args:
+            x numpy.ndarray: The record.
+        Returns:
+            bool: True if this rule covers x, False otherwise.
+        &#34;&#34;&#34;
+        return all([[(x[feature] &gt;= lower) &amp; (x[feature] &lt; upper)] for feature, (lower, upper) in self])</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="models.Rule"><code class="flex name class">
+<span>class <span class="ident">Rule</span></span>
+<span>(</span><span>premises=None, consequence=None, distance=&lt;function euclidean&gt;, names=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A_ logical rule in conjunctive form.</p>
+<p>Default rule with the given premises and consequence.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>premises</code></strong> :&ensp;<code>dict</code></dt>
+<dd>Dictionary {feature -&gt; premise} holding the premise for @feature. Defaults to the empty
+dictionary.</dd>
+<dt><strong><code>consequence</code></strong> :&ensp;<code>int</code></dt>
+<dd>Outcome of the rule. Defaults to None.</dd>
+<dt><strong><code>distance</code></strong> :&ensp;<code>function</code></dt>
+<dd>Function Rule x Record -&gt; float to evaluate the centrality of a record
+w.r.t. the rule. Defaults to Euclidean distance.</dd>
+<dt><strong><code>names</code></strong> :&ensp;<code>list</code></dt>
+<dd>Names of categorical variables. Set of sets, each set is a group of features on the same</dd>
+</dl>
+<p>variable.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Rule(Unit):
+    &#34;&#34;&#34;A_ logical rule in conjunctive form.&#34;&#34;&#34;
+
+    def __init__(self, premises=None, consequence=None, distance=euclidean, names=None):
+        &#34;&#34;&#34;
+        Default rule with the given premises and consequence.
+
+        Args:
+            premises (dict): Dictionary {feature -&gt; premise} holding the premise for @feature. Defaults to the empty
+                                dictionary.
+            consequence (int): Outcome of the rule. Defaults to None.
+            distance (function): Function Rule x Record -&gt; float to evaluate the centrality of a record
+                                w.r.t. the rule. Defaults to Euclidean distance.
+            names (list): Names of categorical variables. Set of sets, each set is a group of features on the same
+            variable.
+        &#34;&#34;&#34;
+        self.features = set(premises.keys())
+        self.premises = premises if premises is not None else dict()
+        self.consequence = consequence
+        self.distance = distance
+        self.names = names
+
+    @classmethod
+    def fromarrays(cls, features=None, thresholds=None, consequence=None, path=None):
+        &#34;&#34;&#34;
+        Args:
+            features (list): The list of features.
+            thresholds (list): The list of thresholds per node in the path.
+            consequence (list): Rules consequences.
+            path (list): Path followed by the rules.
+        &#34;&#34;&#34;
+        if thresholds is None:
+            raise ValueError(&#39;Missing thresholds&#39;)
+        if consequence is None:
+            raise ValueError(&#39;Missing consequence&#39;)
+        if path is None:
+            raise ValueError(&#39;Missing path&#39;)
+        if features is None:
+            raise ValueError(&#39;Missing features&#39;)
+
+        __premises = {}
+        __features = features
+        __consequence = int(consequence)
+
+        # thresholds_ = thresholds[:-1]
+        indices_per_feature = {feature: argwhere(__features == feature).flatten()
+                               for feature in __features}
+        directions_per_feature = {f: [sign(path[k + 1]) for k in indices_per_feature[f] if k &lt; len(path) - 1]
+                                  for f in __features}
+
+        for feature in __features:
+            if len(indices_per_feature[feature]) == 1:
+                try:
+                    threshold = thresholds[indices_per_feature[feature][0]]
+                except IndexError as e:
+                    print(len(features), len(thresholds), len(indices_per_feature), feature, consequence, len(path))
+                    print(features, thresholds, indices_per_feature, feature, consequence, path)
+                    raise e
+                __premises[feature] = (-inf, threshold) if directions_per_feature[feature][0] &lt; 0 else (threshold, inf)
+            else:
+                lower_bounds_idx = [index for index, direction in zip(indices_per_feature[feature],
+                                                                      directions_per_feature[feature])
+                                    if direction &gt; 0]
+                upper_bounds_idx = [index for index, direction in zip(indices_per_feature[feature],
+                                                                      directions_per_feature[feature])
+                                    if direction &lt; 0]
+                lower_bounds, upper_bounds = (array([thresholds[lower_idx] for lower_idx in lower_bounds_idx]),
+                                              array([thresholds[upper_idx] for upper_idx in upper_bounds_idx]))
+
+                if lower_bounds.shape[0] &gt; 0 and upper_bounds.shape[0] &gt; 0:
+                    __premises[feature] = (max(lower_bounds), min(upper_bounds))
+                elif lower_bounds.shape[0] == 0:
+                    __premises[feature] = (-inf, min(upper_bounds))
+                elif upper_bounds.shape[0] == 0:
+                    __premises[feature] = (max(lower_bounds), +inf)
+
+        return cls(__premises, __consequence)
+
+    def __len__(self):
+        if not hasattr(self, &#39;names&#39;) or self.names is None:
+            rule_len = len(self.premises)
+        else:
+            # Categorical names have the form &#39;variable=value&#39;, hence create a set of &#39;variable&#39; prefixes
+            features_names = set([self.names[f].split(&#39;=&#39;)[0] if &#39;=&#39; in self.names[f] else self.names[f]
+                                  for f in self.premises.keys()])
+            rule_len = len(features_names)
+
+        return rule_len
+
+    def __repr__(self):
+        return str(self.premises) + &#39;\n&#39; + str(self.consequence)
+
+    def __str__(self):
+        str_ = &#39;{\n&#39;
+        for k in sorted(self.features):
+            feature_name = self.names[k]
+            str_ = str_ + &#39;\t&#39; + feature_name + &#39;: &#39; + str(self.premises[k]) + &#39;\n&#39;
+        str_ += &#39;\n\tlabel: &#39; + str(self.consequence) + &#39;\n&#39;
+        str_ += &#39;}\n&#39;
+
+        return str_
+
+    def __eq__(self, other):
+        &#34;&#34;&#34;True iff the `other` has the same ranges of this.&#34;&#34;&#34;
+        return self.premises == other.premises and self.consequence == other.consequence
+
+    def __hash__(self):
+        return hash(tuple([(k, v1, v2, self.consequence) for k, (v1, v2) in self.premises.items()]))
+
+    def __contains__(self, item):
+        return item in self.premises
+
+    def __getitem__(self, item):
+        if item not in self.premises:
+            raise KeyError(str(item) + &#39; not in rule&#39;)
+        return self.premises[item]
+
+    def __setitem__(self, key, value):
+        self.premises[key] = value
+        return self
+
+    def __iter__(self):
+        for el in self.premises.items():
+            yield el
+
+    def __delitem__(self, key):
+        del self.premises[key]
+        return self
+
+    def __copy__(self):
+        cop_rule = Rule(self.premises, self.consequence)
+
+        return cop_rule
+
+    def __deepcopy__(self, memodict=None):
+        cop_rule = Rule(deepcopy(self.premises), deepcopy(self.consequence))
+
+        return cop_rule
+
+    def json(self):
+        &#34;&#34;&#34;
+        Encode this object in a JSON dictionary.
+
+        Returns:
+            dict: The JSON dictionary representation of this object.
+        &#34;&#34;&#34;
+        json_dict = {int(k): [v1, v2] for k, (v1, v2) in self.premises.items()}
+        json_dict[&#39;label&#39;] = int(self.consequence)
+
+        return json_dict
+
+    @classmethod
+    def from_json(cls, json_file, names=None):
+        &#34;&#34;&#34;
+        Read rules from json_file.
+
+        Args:
+            json_file (str): Path of the json file.
+            names (list): Features names, if any, None otherwise. Defaults to None.
+        Returns:
+            list: List of rules in json_file.
+        &#34;&#34;&#34;
+        with open(json_file, &#39;r&#39;) as log:
+            jsonized_rules = json.load(log)
+            premises = [{int(k): v for k, v in dic.items() if k != &#39;consequence&#39; and k != &#39;label&#39;}
+                        for dic in jsonized_rules]
+            consequences = [dic[&#39;consequence&#39;] if &#39;consequence&#39; in dic else dic[&#39;label&#39;] for dic in jsonized_rules]
+        rules = [Rule(premises=premise, consequence=consequence)
+                 for premise, consequence in zip(premises, consequences)]
+        if names is not None:
+            for r in rules:
+                r.names = names
+
+        return rules
+
+    def to_dict(self):
+        &#34;&#34;&#34;
+        Compute the python dictionary associated with this rule.
+
+        Returns:
+            dict: Python dictionary.
+        &#34;&#34;&#34;
+        this_copy = deepcopy(self)
+        this_copy.premises[&#39;label&#39;] = self.consequence
+
+        return this_copy
+
+    def __invert__(self):
+        &#34;&#34;&#34;Negate rule by swapping its consequence. Defaults to (consequence + 1) % 2 if
+        @invert was not provided at construction time.
+
+        Returns:
+            Rule: Rule with the same premises and inverted consequence.
+        &#34;&#34;&#34;
+        neg_rule = deepcopy(self)
+        neg_rule.consequence = (self.consequence + 1) % 2
+
+        return neg_rule
+
+    def __add__(self, other):
+        &#34;&#34;&#34;Sum to rule according to the quasi-polyhedra union.
+
+        Args:
+            other (Rule): The rule to add.
+
+        Returns:
+            Rule: New rule with united premises and same consequence.
+                    Throws ValueError when discordant consequences are found.
+        &#34;&#34;&#34;
+        if self.consequence != other.consequence:
+            raise ValueError(&#39;Rules should have the same consequence&#39;)
+
+        sum_rule = Rule({}, self.consequence)
+        premises_in_common = {feature for feature in self.premises if feature in other.premises}
+        premises_exclusive = {feature for feature in self.premises if feature not in other.premises}
+
+        for f in premises_in_common:
+            sum_rule[f] = (min(self[f][0], other[f][0]), max(self[f][1], other[f][1]))
+        for f in premises_exclusive:
+            sum_rule[f] = self[f]
+        sum_rule.features = set(sum_rule.premises.keys())
+
+        return sum_rule
+
+    def __sub__(self, other):
+        &#34;&#34;&#34;Subtract to rule according to the quasi-polyhedra union.
+
+        Args:
+            other (Rule): The rule to subtract.
+
+        Returns:
+            set: New rule(s) with different premises and same consequence as self.
+        &#34;&#34;&#34;
+        premises_in_common = self.features &amp; other.features
+
+        negated_premises = {}
+        additional_rules_nr = 0
+        for f in premises_in_common:
+            self_a, self_b, other_a, other_b = self[f][0], self[f][1], other[f][0], other[f][1]
+
+            # strong included in the weak, split the weak in two
+            if self_a &lt;= other_a &lt;= other_b &lt;= self_b:
+                negated_premises[f] = [(self_a, other_a), (other_b, self_b)]
+                additional_rules_nr += 1
+            # weak shifted to the left
+            elif other_a &lt; self_a &lt; other_b &lt;= self_b:
+                negated_premises[f] = (other_b, self_b)
+            # weak shifted to the right
+            elif self_a &lt;= other_a &lt;= self_b &lt;= other_b:
+                negated_premises[f] = (self_a, other_a)
+            # weak included in strong
+            elif other_a &lt; self_a &lt;= self_b &lt;= other_b:
+                negated_premises[f] = None
+
+        new_rules = [Rule(premises={}, consequence=other.consequence)
+                     for _ in range(additional_rules_nr + 1)]
+
+        # Preserve features in the weak rule, but not in the strong
+        for f, val in other:
+            if f not in negated_premises:
+                for rule in new_rules:
+                    rule[f] = val
+                    rule.features.add(f)
+
+        # Cut according to the negated submissive ranges
+        for f in negated_premises.keys():
+            if f in negated_premises:
+                if negated_premises[f] is None:
+                    for rule in new_rules:
+                        if f in rule:
+                            del rule[f]
+                            rule.features = rule.features - {f}
+                elif isinstance(negated_premises[f], list):
+                    # First half of the rules with first value
+                    for rule in new_rules[:floor(additional_rules_nr / 2)]:
+                        rule[f] = negated_premises[f][0]
+                        rule.features.add(f)
+                    # Second half of the rules with second value
+                    for rule in new_rules[floor(additional_rules_nr / 2):]:
+                        rule[f] = negated_premises[f][1]
+                        rule.features.add(f)
+                else:
+                    for rule in new_rules:
+                        rule[f] = negated_premises[f]
+                        rule.features.add(f)
+
+        new_rules = set(new_rules)
+
+        return new_rules
+
+    def __and__(self, other):
+        &#34;&#34;&#34;Intersection between rules.&#34;&#34;&#34;
+        if not isinstance(other, Rule):
+            raise ValueError(&#39;Not a Rule&#39;)
+
+        r_minus_s, s_minus_r = self - other, other - self
+        rules = r_minus_s | s_minus_r
+
+        return self in rules and other in rules
+
+    def covers(self, x):
+        &#34;&#34;&#34;Does this rule cover x?
+
+        Args:
+            x numpy.ndarray: The record.
+        Returns:
+            bool: True if this rule covers x, False otherwise.
+        &#34;&#34;&#34;
+        return all([[(x[feature] &gt;= lower) &amp; (x[feature] &lt; upper)] for feature, (lower, upper) in self])</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="models.Unit" href="#models.Unit">Unit</a></li>
+</ul>
+<h3>Static methods</h3>
+<dl>
+<dt id="models.Rule.from_json"><code class="name flex">
+<span>def <span class="ident">from_json</span></span>(<span>json_file, names=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Read rules from json_file.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>json_file</code></strong> :&ensp;<code>str</code></dt>
+<dd>Path of the json file.</dd>
+<dt><strong><code>names</code></strong> :&ensp;<code>list</code></dt>
+<dd>Features names, if any, None otherwise. Defaults to None.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>List of rules in json_file.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+def from_json(cls, json_file, names=None):
+    &#34;&#34;&#34;
+    Read rules from json_file.
+
+    Args:
+        json_file (str): Path of the json file.
+        names (list): Features names, if any, None otherwise. Defaults to None.
+    Returns:
+        list: List of rules in json_file.
+    &#34;&#34;&#34;
+    with open(json_file, &#39;r&#39;) as log:
+        jsonized_rules = json.load(log)
+        premises = [{int(k): v for k, v in dic.items() if k != &#39;consequence&#39; and k != &#39;label&#39;}
+                    for dic in jsonized_rules]
+        consequences = [dic[&#39;consequence&#39;] if &#39;consequence&#39; in dic else dic[&#39;label&#39;] for dic in jsonized_rules]
+    rules = [Rule(premises=premise, consequence=consequence)
+             for premise, consequence in zip(premises, consequences)]
+    if names is not None:
+        for r in rules:
+            r.names = names
+
+    return rules</code></pre>
+</details>
+</dd>
+<dt id="models.Rule.fromarrays"><code class="name flex">
+<span>def <span class="ident">fromarrays</span></span>(<span>features=None, thresholds=None, consequence=None, path=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>features</code></strong> :&ensp;<code>list</code></dt>
+<dd>The list of features.</dd>
+<dt><strong><code>thresholds</code></strong> :&ensp;<code>list</code></dt>
+<dd>The list of thresholds per node in the path.</dd>
+<dt><strong><code>consequence</code></strong> :&ensp;<code>list</code></dt>
+<dd>Rules consequences.</dd>
+<dt><strong><code>path</code></strong> :&ensp;<code>list</code></dt>
+<dd>Path followed by the rules.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+def fromarrays(cls, features=None, thresholds=None, consequence=None, path=None):
+    &#34;&#34;&#34;
+    Args:
+        features (list): The list of features.
+        thresholds (list): The list of thresholds per node in the path.
+        consequence (list): Rules consequences.
+        path (list): Path followed by the rules.
+    &#34;&#34;&#34;
+    if thresholds is None:
+        raise ValueError(&#39;Missing thresholds&#39;)
+    if consequence is None:
+        raise ValueError(&#39;Missing consequence&#39;)
+    if path is None:
+        raise ValueError(&#39;Missing path&#39;)
+    if features is None:
+        raise ValueError(&#39;Missing features&#39;)
+
+    __premises = {}
+    __features = features
+    __consequence = int(consequence)
+
+    # thresholds_ = thresholds[:-1]
+    indices_per_feature = {feature: argwhere(__features == feature).flatten()
+                           for feature in __features}
+    directions_per_feature = {f: [sign(path[k + 1]) for k in indices_per_feature[f] if k &lt; len(path) - 1]
+                              for f in __features}
+
+    for feature in __features:
+        if len(indices_per_feature[feature]) == 1:
+            try:
+                threshold = thresholds[indices_per_feature[feature][0]]
+            except IndexError as e:
+                print(len(features), len(thresholds), len(indices_per_feature), feature, consequence, len(path))
+                print(features, thresholds, indices_per_feature, feature, consequence, path)
+                raise e
+            __premises[feature] = (-inf, threshold) if directions_per_feature[feature][0] &lt; 0 else (threshold, inf)
+        else:
+            lower_bounds_idx = [index for index, direction in zip(indices_per_feature[feature],
+                                                                  directions_per_feature[feature])
+                                if direction &gt; 0]
+            upper_bounds_idx = [index for index, direction in zip(indices_per_feature[feature],
+                                                                  directions_per_feature[feature])
+                                if direction &lt; 0]
+            lower_bounds, upper_bounds = (array([thresholds[lower_idx] for lower_idx in lower_bounds_idx]),
+                                          array([thresholds[upper_idx] for upper_idx in upper_bounds_idx]))
+
+            if lower_bounds.shape[0] &gt; 0 and upper_bounds.shape[0] &gt; 0:
+                __premises[feature] = (max(lower_bounds), min(upper_bounds))
+            elif lower_bounds.shape[0] == 0:
+                __premises[feature] = (-inf, min(upper_bounds))
+            elif upper_bounds.shape[0] == 0:
+                __premises[feature] = (max(lower_bounds), +inf)
+
+    return cls(__premises, __consequence)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="models.Rule.covers"><code class="name flex">
+<span>def <span class="ident">covers</span></span>(<span>self, x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Does this rule cover x?</p>
+<h2 id="args">Args</h2>
+<p>x numpy.ndarray: The record.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if this rule covers x, False otherwise.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def covers(self, x):
+    &#34;&#34;&#34;Does this rule cover x?
+
+    Args:
+        x numpy.ndarray: The record.
+    Returns:
+        bool: True if this rule covers x, False otherwise.
+    &#34;&#34;&#34;
+    return all([[(x[feature] &gt;= lower) &amp; (x[feature] &lt; upper)] for feature, (lower, upper) in self])</code></pre>
+</details>
+</dd>
+<dt id="models.Rule.json"><code class="name flex">
+<span>def <span class="ident">json</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Encode this object in a JSON dictionary.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>dict</code></dt>
+<dd>The JSON dictionary representation of this object.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def json(self):
+    &#34;&#34;&#34;
+    Encode this object in a JSON dictionary.
+
+    Returns:
+        dict: The JSON dictionary representation of this object.
+    &#34;&#34;&#34;
+    json_dict = {int(k): [v1, v2] for k, (v1, v2) in self.premises.items()}
+    json_dict[&#39;label&#39;] = int(self.consequence)
+
+    return json_dict</code></pre>
+</details>
+</dd>
+<dt id="models.Rule.to_dict"><code class="name flex">
+<span>def <span class="ident">to_dict</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Compute the python dictionary associated with this rule.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>dict</code></dt>
+<dd>Python dictionary.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_dict(self):
+    &#34;&#34;&#34;
+    Compute the python dictionary associated with this rule.
+
+    Returns:
+        dict: Python dictionary.
+    &#34;&#34;&#34;
+    this_copy = deepcopy(self)
+    this_copy.premises[&#39;label&#39;] = self.consequence
+
+    return this_copy</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="models.Unit" href="#models.Unit">Unit</a></b></code>:
+<ul class="hlist">
+<li><code><a title="models.Unit.predict" href="#models.Unit.predict">predict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="models.Unit"><code class="flex name class">
+<span>class <span class="ident">Unit</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>General computational unit with a <code>predict</code> method.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Unit:
+    &#34;&#34;&#34;General computational unit with a `predict` method.&#34;&#34;&#34;
+
+    def __hash__(self):
+        return id(self)
+
+    def __repr__(self):
+        return &#39;None&#39;
+
+    def __str__(self):
+        return &#39;Empty&#39;
+
+    def predict(self, x):
+        &#34;&#34;&#34;Evaluate any.
+
+        Args:
+            x (object): The object to evaluate.
+        Returns:
+              None
+        &#34;&#34;&#34;
+        return None</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="models.Rule" href="#models.Rule">Rule</a></li>
+<li><a title="models.Vector" href="#models.Vector">Vector</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="models.Unit.predict"><code class="name flex">
+<span>def <span class="ident">predict</span></span>(<span>self, x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Evaluate any.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>object</code></dt>
+<dd>The object to evaluate.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>None</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def predict(self, x):
+    &#34;&#34;&#34;Evaluate any.
+
+    Args:
+        x (object): The object to evaluate.
+    Returns:
+          None
+    &#34;&#34;&#34;
+    return None</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="models.Vector"><code class="flex name class">
+<span>class <span class="ident">Vector</span></span>
+<span>(</span><span>vector, position, distance=&lt;function euclidean&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Vector unit.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Vector(Unit):
+    &#34;&#34;&#34;Vector unit.&#34;&#34;&#34;
+
+    def __init__(self, vector, position, distance=euclidean):
+        self.__vector = vector
+        self.__dimension = len(vector)
+        self.__position = position
+        self.__eval = distance
+
+    def __len__(self):
+        return self.__dimension
+
+    def __hash__(self):
+        return hash(self.__vector)
+
+    def __getitem__(self, item):
+        return self.__vector[item]
+
+    def __add__(self, other):
+        sum_ = self.__vector + other.__vector
+        return sum_
+
+    def __sub__(self, other):
+        sub_ = self.__vector - other.__vector
+        return sub_
+
+    def __mul__(self, other):
+        mul_ = self.__vector * other.__vector
+        return mul_
+
+    def __repr__(self):
+        return repr(self.__vector) + &#39;\n&#39; \
+               + repr(self.__dimension) + &#39;\n&#39; \
+               + repr(self.__position) + &#39;\n&#39;
+
+    def __str__(self):
+        return &#39;Vector: &#39; + repr(self.__vector) + &#39;\n&#39; \
+               + &#39;Dimensionality: &#39; + repr(self.__dimension) + &#39;\n&#39; \
+               + &#39;Position: &#39; + repr(self.__position) + &#39;\n&#39;
+
+    def predict(self, x):
+        return self.__eval(x, self.__vector)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="models.Unit" href="#models.Unit">Unit</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="models.Unit" href="#models.Unit">Unit</a></b></code>:
+<ul class="hlist">
+<li><code><a title="models.Unit.predict" href="#models.Unit.predict">predict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="models.Rule" href="#models.Rule">Rule</a></code></h4>
+<ul class="">
+<li><code><a title="models.Rule.covers" href="#models.Rule.covers">covers</a></code></li>
+<li><code><a title="models.Rule.from_json" href="#models.Rule.from_json">from_json</a></code></li>
+<li><code><a title="models.Rule.fromarrays" href="#models.Rule.fromarrays">fromarrays</a></code></li>
+<li><code><a title="models.Rule.json" href="#models.Rule.json">json</a></code></li>
+<li><code><a title="models.Rule.to_dict" href="#models.Rule.to_dict">to_dict</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="models.Unit" href="#models.Unit">Unit</a></code></h4>
+<ul class="">
+<li><code><a title="models.Unit.predict" href="#models.Unit.predict">predict</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="models.Vector" href="#models.Vector">Vector</a></code></h4>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.1</a>.</p>
+</footer>
+</body>
+</html>

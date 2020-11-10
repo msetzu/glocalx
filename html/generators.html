@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.1" />
+<title>generators API documentation</title>
+<meta name="description" content="Generators module. Generate data provided to Ethica." />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>generators</code></h1>
+</header>
+<section id="section-intro">
+<p>Generators module. Generate data provided to Ethica.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;Generators module. Generate data provided to Ethica.&#34;&#34;&#34;
+from abc import abstractmethod
+
+from numpy import hstack, unique, array, argwhere, concatenate
+
+# Stats
+from numpy.random import choice, random
+from sklearn.neighbors import KernelDensity
+
+from evaluators import MemEvaluator
+
+from logzero import logger
+
+
+class BudgedExhaustedException(Exception):
+    &#34;&#34;&#34;Exception raised when a given budget is exhausted.&#34;&#34;&#34;
+
+    pass
+
+
+class Generator:
+    &#34;&#34;&#34;Data generator interface.&#34;&#34;&#34;
+
+    @abstractmethod
+    def generate(self, sample, oracle=None, size=1000, **kwargs):
+        &#34;&#34;&#34;
+        Generate `size` samples miming `oracle` on `sample`.
+        Args:
+            sample (ndarray): Data sample to enrich.
+            oracle (Predictor): Oracle box.
+            size (int): Number of samples to generate.
+            kwargs: Optional additional arguments.
+        Returns:
+            numpy.ndarray: Generate samples labelled by `oracle`.
+                            Label is in last column.
+        &#34;&#34;&#34;
+        pass
+
+
+class TrePanGenerator(Generator):
+    &#34;&#34;&#34;Generator based on TrePan&#39;s generation schema.&#34;&#34;&#34;
+
+    def __init__(self, oracle=None):
+        self.oracle = oracle
+
+    def generate(self, sample, oracle=None, size=1000, budget=50000, **kwargs):
+        &#34;&#34;&#34;
+        Generate `size` samples miming `oracle` on `sample`.
+        Args:
+            sample (ndarray): Data sample to enrich.
+            oracle (Predictor): Oracle box. If provided and an
+                                oracle was given in construction, this
+                                `oracle` is used in its place.
+            size (int): Number of samples to generate.
+            budget (int): Maximum number of generation tries.
+            kwargs: Optional additional arguments.
+        Returns:
+            numpy.ndarray: Generate samples labelled by `oracle`.
+                            Label is in last column.
+        &#34;&#34;&#34;
+        rules = kwargs[&#39;rules&#39;]
+        types = self.__compute_types(sample)
+        distributions, populations = self.__compute_distributions(sample, types)
+        generation_oracle = self.oracle if oracle is None else oracle
+        balance_ratio = generation_oracle.predict(sample).round().mean()
+        generated_sample = self.__generate_sample(sample, distributions, types, populations, generation_oracle,
+                                                  generation_budget=budget,
+                                                  size=size, rules=rules, output_mean=balance_ratio)
+
+        return generated_sample
+
+    @staticmethod
+    def __compute_types(sample):
+        &#34;&#34;&#34;
+        Compute t for the given `sample`.
+        Args:
+            sample (ndarray): Sample.
+        Returns:
+            numpy.ndarray: Array of t.
+        &#34;&#34;&#34;
+        types = list()
+        for t in range(sample.shape[1]):
+            # Only two chunks for binary variables
+            is_binary = unique(sample[:, t]).size == 2 and 0 in sample[:, t] and 1 in sample[:, t]
+            if is_binary:
+                types.append(&#39;binary&#39;)
+                continue
+
+            types.append(&#39;continuous&#39;)
+        types = array(types)
+
+        return types
+
+    @staticmethod
+    def __filter(samples, rules):
+        &#34;&#34;&#34;
+        Filter the given `samples` satisfying `rules`.
+        Args:
+            samples (ndarray): Samples.
+            rules (list): List of rules.
+
+        Returns:
+            numpy.ndarray: Samples in `samples` satisfying `rules`.
+        &#34;&#34;&#34;
+        evaluator = MemEvaluator(oracle=None)
+        coverage_matrix = evaluator.coverage(rules, samples)
+        filtered_samples = samples[coverage_matrix.sum(axis=0) &gt; 0]
+
+        return filtered_samples
+
+    def __generate_sample(self, records, distributions, types, populations, oracle, size, rules=None,
+                          generation_budget=10000, eps=.1, output_mean=0.5):
+        &#34;&#34;&#34;
+            Generate a sample for `records`.
+
+            Arguments:
+                records (ndarray): Data.
+                distributions (list): Features distributions.
+                types (iterable): List of types. &#39;unary
+                populations (list): List of populations. Discrete features require a sorted list of entries.
+                oracle (Estimator): Oracle with &#39;predict&#39; method.
+                size (int): The neighborhood size.
+                rules (list): List of rules to filter the sample.
+                generation_budget (int): Maximum generation tries. Defaults to 1000.
+                eps (float): Tolerance for sampling. Defaults to 0.1
+                output_mean (float): Defaults to 0.5.
+
+            Returns:
+                numpy.ndarray: The generated sample labelled by `oracle`.
+        &#34;&#34;&#34;
+        # Joint estimator
+        jointly_estimated_samples = distributions[-1].sample(10 * size)
+        nr_ones, nr_zeros = int(output_mean * size), int(size - output_mean * size)
+        oracle_predictions = oracle.predict(jointly_estimated_samples).round()
+        ones = argwhere(oracle_predictions == 1)[:nr_ones, 0]
+        zeroes = argwhere(oracle_predictions == 0)[:nr_zeros, 0]
+        idx = hstack((ones, zeroes))
+        samples = jointly_estimated_samples[idx]
+
+        samples_output_mean = oracle_predictions[idx].mean()
+        generated_samples = hstack((samples, oracle_predictions[idx].reshape(-1, 1)))
+        if output_mean - eps &lt;= samples_output_mean &lt;= output_mean + eps:
+            return generated_samples
+
+        # Ensemble of estimators if joint samples failed
+        samples_output_mean = output_mean - 2 * eps
+        generated_samples = None
+        budget = generation_budget
+        budget_bucket = budget // 10
+
+        while not (output_mean - eps &lt;= samples_output_mean &lt;= output_mean + eps) and budget &gt; 0:
+            if budget % budget_bucket == 0:
+                logger.debug(&#39;Budget &#39; + str(budget) + &#39;/&#39; + str(generation_budget) + &#39;...&#39;)
+            budget -= 1
+            # Generate random samples in over
+            samples = random((10 * size, len(distributions)))
+            for f, distribution, population in zip(range(len(types)), distributions, populations):
+                if types[f] == &#39;continuous&#39;:
+                    samples[:, f] = distribution.sample(10 * size).squeeze()
+                else:
+                    samples[:, f] = choice(a=population, p=distribution, size=10 * size)
+
+            # Filter
+            samples = self.__filter(samples, rules)
+            samples[:, types == &#39;binary&#39;] = concatenate([records[:, types == &#39;binary&#39;]] * 10, axis=0)
+            if len(samples) &lt; size:
+                continue
+
+            nr_ones, nr_zeros = int(output_mean * size), int(size - output_mean * size)
+            oracle_predictions = oracle.predict(samples).round()
+            ones = argwhere(oracle_predictions == 1)[:nr_ones, 0]
+            zeroes = argwhere(oracle_predictions == 0)[:nr_zeros, 0]
+            idx = hstack((ones, zeroes))
+            samples = samples[idx]
+
+            samples_output_mean = oracle_predictions[idx].mean()
+            generated_samples = hstack((samples, oracle_predictions[idx].reshape(-1, 1)))
+
+        # Budget exhausted
+        if budget &lt;= 0:
+            raise BudgedExhaustedException(&#39;Budget &#39; + str(generation_budget) + &#39; exhausted&#39;)
+
+        return generated_samples
+
+    @staticmethod
+    def __compute_distributions(records, types):
+        &#34;&#34;&#34;
+            Compute statistical distributions for each feature in @records.
+
+            Arguments:
+                records (DataFrame): Records to analyze.
+
+            Returns:
+                tuple: A_ tuple (distributions, populations).
+                        Note that continuous distributions have a None population.
+        &#34;&#34;&#34;
+        distributions = []
+        populations = []
+        for f in range(records.shape[1]):
+            if types[f] == &#39;continuous&#39;:
+                kd_estimator = KernelDensity(bandwidth=0.04, kernel=&#39;gaussian&#39;, algorithm=&#39;ball_tree&#39;)
+                kd_estimator.fit(records[:, f].reshape(-1, 1))
+                distributions.append(kd_estimator)
+            else:
+                mean = records[:, f].mean()
+                distributions.append(array([1 - mean, mean]))  # probability for 0 and 1
+            # Populate both discrete and continuous variables
+            populations.append(sorted(set(records[:, f])))
+
+        # Full dataset estimator
+        kd_estimator = KernelDensity(bandwidth=0.04, kernel=&#39;gaussian&#39;, algorithm=&#39;ball_tree&#39;)
+        kd_estimator.fit(records)
+        distributions.append(kd_estimator)
+        populations.append(None)
+
+        return distributions, populations</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="generators.choice"><code class="name flex">
+<span>def <span class="ident">choice</span></span>(<span>a, size=None, replace=True, p=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates a random sample from a given 1-D array</p>
+<pre><code>    !!! versionadded "Added in version:&amp;ensp;1.7.0"
+</code></pre>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>New code should use the <code><a title="generators.choice" href="#generators.choice">RandomState.choice()</a></code> method of a <code>default_rng()</code>
+instance instead; see <code>random-quick-start</code>.</p>
+</div>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>1-D array-like</code> or <code>int</code></dt>
+<dd>If an ndarray, a random sample is generated from its elements.
+If an int, the random sample is generated as if a were np.arange(a)</dd>
+<dt><strong><code>size</code></strong> :&ensp;<code>int</code> or <code>tuple</code> of <code>ints</code>, optional</dt>
+<dd>Output shape.
+If the given shape is, e.g., <code>(m, n, k)</code>, then
+<code>m * n * k</code> samples are drawn.
+Default is None, in which case a
+single value is returned.</dd>
+<dt><strong><code>replace</code></strong> :&ensp;<code>boolean</code>, optional</dt>
+<dd>Whether the sample is with or without replacement</dd>
+<dt><strong><code>p</code></strong> :&ensp;<code>1-D array-like</code>, optional</dt>
+<dd>The probabilities associated with each entry in a.
+If not given the sample assumes a uniform distribution over all
+entries in a.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>samples</code></strong> :&ensp;<code>single item</code> or <code>ndarray</code></dt>
+<dd>The generated random samples</dd>
+</dl>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>ValueError</code></dt>
+<dd>If a is an int and less than zero, if a or p are not 1-dimensional,
+if a is an array-like of size 0, if p is not a vector of
+probabilities, if a and p have different lengths, or if
+replace=False and the sample size is greater than the population
+size</dd>
+</dl>
+<h2 id="see-also">See Also</h2>
+<p><code>randint</code>, <code>shuffle</code>, <code>permutation</code>
+<code>Generator.choice: which should be used in new code</code></p>
+<h2 id="examples">Examples</h2>
+<p>Generate a uniform random sample from np.arange(5) of size 3:</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; np.random.choice(5, 3)
+array([0, 3, 4]) # random
+&gt;&gt;&gt; #This is equivalent to np.random.randint(0,5,3)
+</code></pre>
+<p>Generate a non-uniform random sample from np.arange(5) of size 3:</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; np.random.choice(5, 3, p=[0.1, 0, 0.3, 0.6, 0])
+array([3, 3, 0]) # random
+</code></pre>
+<p>Generate a uniform random sample from np.arange(5) of size 3 without
+replacement:</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; np.random.choice(5, 3, replace=False)
+array([3,1,0]) # random
+&gt;&gt;&gt; #This is equivalent to np.random.permutation(np.arange(5))[:3]
+</code></pre>
+<p>Generate a non-uniform random sample from np.arange(5) of size
+3 without replacement:</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; np.random.choice(5, 3, replace=False, p=[0.1, 0, 0.3, 0.6, 0])
+array([2, 3, 0]) # random
+</code></pre>
+<p>Any of the above can be repeated with an arbitrary array-like
+instead of just integers. For instance:</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; aa_milne_arr = ['pooh', 'rabbit', 'piglet', 'Christopher']
+&gt;&gt;&gt; np.random.choice(aa_milne_arr, 5, p=[0.5, 0.1, 0.1, 0.3])
+array(['pooh', 'pooh', 'pooh', 'Christopher', 'piglet'], # random
+      dtype='&lt;U11')
+</code></pre></div>
+</dd>
+<dt id="generators.random"><code class="name flex">
+<span>def <span class="ident">random</span></span>(<span>size=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return random floats in the half-open interval [0.0, 1.0). Alias for
+<code>random_sample</code> to ease forward-porting to the new random API.</p></div>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="generators.BudgedExhaustedException"><code class="flex name class">
+<span>class <span class="ident">BudgedExhaustedException</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Exception raised when a given budget is exhausted.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class BudgedExhaustedException(Exception):
+    &#34;&#34;&#34;Exception raised when a given budget is exhausted.&#34;&#34;&#34;
+
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="generators.Generator"><code class="flex name class">
+<span>class <span class="ident">Generator</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Data generator interface.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Generator:
+    &#34;&#34;&#34;Data generator interface.&#34;&#34;&#34;
+
+    @abstractmethod
+    def generate(self, sample, oracle=None, size=1000, **kwargs):
+        &#34;&#34;&#34;
+        Generate `size` samples miming `oracle` on `sample`.
+        Args:
+            sample (ndarray): Data sample to enrich.
+            oracle (Predictor): Oracle box.
+            size (int): Number of samples to generate.
+            kwargs: Optional additional arguments.
+        Returns:
+            numpy.ndarray: Generate samples labelled by `oracle`.
+                            Label is in last column.
+        &#34;&#34;&#34;
+        pass</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="generators.TrePanGenerator" href="#generators.TrePanGenerator">TrePanGenerator</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="generators.Generator.generate"><code class="name flex">
+<span>def <span class="ident">generate</span></span>(<span>self, sample, oracle=None, size=1000, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generate <code>size</code> samples miming <code>oracle</code> on <code>sample</code>.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sample</code></strong> :&ensp;<code>ndarray</code></dt>
+<dd>Data sample to enrich.</dd>
+<dt><strong><code>oracle</code></strong> :&ensp;<code>Predictor</code></dt>
+<dd>Oracle box.</dd>
+<dt><strong><code>size</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of samples to generate.</dd>
+<dt><strong><code>kwargs</code></strong></dt>
+<dd>Optional additional arguments.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>numpy.ndarray</code></dt>
+<dd>Generate samples labelled by <code>oracle</code>.
+Label is in last column.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@abstractmethod
+def generate(self, sample, oracle=None, size=1000, **kwargs):
+    &#34;&#34;&#34;
+    Generate `size` samples miming `oracle` on `sample`.
+    Args:
+        sample (ndarray): Data sample to enrich.
+        oracle (Predictor): Oracle box.
+        size (int): Number of samples to generate.
+        kwargs: Optional additional arguments.
+    Returns:
+        numpy.ndarray: Generate samples labelled by `oracle`.
+                        Label is in last column.
+    &#34;&#34;&#34;
+    pass</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="generators.TrePanGenerator"><code class="flex name class">
+<span>class <span class="ident">TrePanGenerator</span></span>
+<span>(</span><span>oracle=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generator based on TrePan's generation schema.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TrePanGenerator(Generator):
+    &#34;&#34;&#34;Generator based on TrePan&#39;s generation schema.&#34;&#34;&#34;
+
+    def __init__(self, oracle=None):
+        self.oracle = oracle
+
+    def generate(self, sample, oracle=None, size=1000, budget=50000, **kwargs):
+        &#34;&#34;&#34;
+        Generate `size` samples miming `oracle` on `sample`.
+        Args:
+            sample (ndarray): Data sample to enrich.
+            oracle (Predictor): Oracle box. If provided and an
+                                oracle was given in construction, this
+                                `oracle` is used in its place.
+            size (int): Number of samples to generate.
+            budget (int): Maximum number of generation tries.
+            kwargs: Optional additional arguments.
+        Returns:
+            numpy.ndarray: Generate samples labelled by `oracle`.
+                            Label is in last column.
+        &#34;&#34;&#34;
+        rules = kwargs[&#39;rules&#39;]
+        types = self.__compute_types(sample)
+        distributions, populations = self.__compute_distributions(sample, types)
+        generation_oracle = self.oracle if oracle is None else oracle
+        balance_ratio = generation_oracle.predict(sample).round().mean()
+        generated_sample = self.__generate_sample(sample, distributions, types, populations, generation_oracle,
+                                                  generation_budget=budget,
+                                                  size=size, rules=rules, output_mean=balance_ratio)
+
+        return generated_sample
+
+    @staticmethod
+    def __compute_types(sample):
+        &#34;&#34;&#34;
+        Compute t for the given `sample`.
+        Args:
+            sample (ndarray): Sample.
+        Returns:
+            numpy.ndarray: Array of t.
+        &#34;&#34;&#34;
+        types = list()
+        for t in range(sample.shape[1]):
+            # Only two chunks for binary variables
+            is_binary = unique(sample[:, t]).size == 2 and 0 in sample[:, t] and 1 in sample[:, t]
+            if is_binary:
+                types.append(&#39;binary&#39;)
+                continue
+
+            types.append(&#39;continuous&#39;)
+        types = array(types)
+
+        return types
+
+    @staticmethod
+    def __filter(samples, rules):
+        &#34;&#34;&#34;
+        Filter the given `samples` satisfying `rules`.
+        Args:
+            samples (ndarray): Samples.
+            rules (list): List of rules.
+
+        Returns:
+            numpy.ndarray: Samples in `samples` satisfying `rules`.
+        &#34;&#34;&#34;
+        evaluator = MemEvaluator(oracle=None)
+        coverage_matrix = evaluator.coverage(rules, samples)
+        filtered_samples = samples[coverage_matrix.sum(axis=0) &gt; 0]
+
+        return filtered_samples
+
+    def __generate_sample(self, records, distributions, types, populations, oracle, size, rules=None,
+                          generation_budget=10000, eps=.1, output_mean=0.5):
+        &#34;&#34;&#34;
+            Generate a sample for `records`.
+
+            Arguments:
+                records (ndarray): Data.
+                distributions (list): Features distributions.
+                types (iterable): List of types. &#39;unary
+                populations (list): List of populations. Discrete features require a sorted list of entries.
+                oracle (Estimator): Oracle with &#39;predict&#39; method.
+                size (int): The neighborhood size.
+                rules (list): List of rules to filter the sample.
+                generation_budget (int): Maximum generation tries. Defaults to 1000.
+                eps (float): Tolerance for sampling. Defaults to 0.1
+                output_mean (float): Defaults to 0.5.
+
+            Returns:
+                numpy.ndarray: The generated sample labelled by `oracle`.
+        &#34;&#34;&#34;
+        # Joint estimator
+        jointly_estimated_samples = distributions[-1].sample(10 * size)
+        nr_ones, nr_zeros = int(output_mean * size), int(size - output_mean * size)
+        oracle_predictions = oracle.predict(jointly_estimated_samples).round()
+        ones = argwhere(oracle_predictions == 1)[:nr_ones, 0]
+        zeroes = argwhere(oracle_predictions == 0)[:nr_zeros, 0]
+        idx = hstack((ones, zeroes))
+        samples = jointly_estimated_samples[idx]
+
+        samples_output_mean = oracle_predictions[idx].mean()
+        generated_samples = hstack((samples, oracle_predictions[idx].reshape(-1, 1)))
+        if output_mean - eps &lt;= samples_output_mean &lt;= output_mean + eps:
+            return generated_samples
+
+        # Ensemble of estimators if joint samples failed
+        samples_output_mean = output_mean - 2 * eps
+        generated_samples = None
+        budget = generation_budget
+        budget_bucket = budget // 10
+
+        while not (output_mean - eps &lt;= samples_output_mean &lt;= output_mean + eps) and budget &gt; 0:
+            if budget % budget_bucket == 0:
+                logger.debug(&#39;Budget &#39; + str(budget) + &#39;/&#39; + str(generation_budget) + &#39;...&#39;)
+            budget -= 1
+            # Generate random samples in over
+            samples = random((10 * size, len(distributions)))
+            for f, distribution, population in zip(range(len(types)), distributions, populations):
+                if types[f] == &#39;continuous&#39;:
+                    samples[:, f] = distribution.sample(10 * size).squeeze()
+                else:
+                    samples[:, f] = choice(a=population, p=distribution, size=10 * size)
+
+            # Filter
+            samples = self.__filter(samples, rules)
+            samples[:, types == &#39;binary&#39;] = concatenate([records[:, types == &#39;binary&#39;]] * 10, axis=0)
+            if len(samples) &lt; size:
+                continue
+
+            nr_ones, nr_zeros = int(output_mean * size), int(size - output_mean * size)
+            oracle_predictions = oracle.predict(samples).round()
+            ones = argwhere(oracle_predictions == 1)[:nr_ones, 0]
+            zeroes = argwhere(oracle_predictions == 0)[:nr_zeros, 0]
+            idx = hstack((ones, zeroes))
+            samples = samples[idx]
+
+            samples_output_mean = oracle_predictions[idx].mean()
+            generated_samples = hstack((samples, oracle_predictions[idx].reshape(-1, 1)))
+
+        # Budget exhausted
+        if budget &lt;= 0:
+            raise BudgedExhaustedException(&#39;Budget &#39; + str(generation_budget) + &#39; exhausted&#39;)
+
+        return generated_samples
+
+    @staticmethod
+    def __compute_distributions(records, types):
+        &#34;&#34;&#34;
+            Compute statistical distributions for each feature in @records.
+
+            Arguments:
+                records (DataFrame): Records to analyze.
+
+            Returns:
+                tuple: A_ tuple (distributions, populations).
+                        Note that continuous distributions have a None population.
+        &#34;&#34;&#34;
+        distributions = []
+        populations = []
+        for f in range(records.shape[1]):
+            if types[f] == &#39;continuous&#39;:
+                kd_estimator = KernelDensity(bandwidth=0.04, kernel=&#39;gaussian&#39;, algorithm=&#39;ball_tree&#39;)
+                kd_estimator.fit(records[:, f].reshape(-1, 1))
+                distributions.append(kd_estimator)
+            else:
+                mean = records[:, f].mean()
+                distributions.append(array([1 - mean, mean]))  # probability for 0 and 1
+            # Populate both discrete and continuous variables
+            populations.append(sorted(set(records[:, f])))
+
+        # Full dataset estimator
+        kd_estimator = KernelDensity(bandwidth=0.04, kernel=&#39;gaussian&#39;, algorithm=&#39;ball_tree&#39;)
+        kd_estimator.fit(records)
+        distributions.append(kd_estimator)
+        populations.append(None)
+
+        return distributions, populations</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="generators.Generator" href="#generators.Generator">Generator</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="generators.TrePanGenerator.generate"><code class="name flex">
+<span>def <span class="ident">generate</span></span>(<span>self, sample, oracle=None, size=1000, budget=50000, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generate <code>size</code> samples miming <code>oracle</code> on <code>sample</code>.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sample</code></strong> :&ensp;<code>ndarray</code></dt>
+<dd>Data sample to enrich.</dd>
+<dt><strong><code>oracle</code></strong> :&ensp;<code>Predictor</code></dt>
+<dd>Oracle box. If provided and an
+oracle was given in construction, this
+<code>oracle</code> is used in its place.</dd>
+<dt><strong><code>size</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of samples to generate.</dd>
+<dt><strong><code>budget</code></strong> :&ensp;<code>int</code></dt>
+<dd>Maximum number of generation tries.</dd>
+<dt><strong><code>kwargs</code></strong></dt>
+<dd>Optional additional arguments.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>numpy.ndarray</code></dt>
+<dd>Generate samples labelled by <code>oracle</code>.
+Label is in last column.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def generate(self, sample, oracle=None, size=1000, budget=50000, **kwargs):
+    &#34;&#34;&#34;
+    Generate `size` samples miming `oracle` on `sample`.
+    Args:
+        sample (ndarray): Data sample to enrich.
+        oracle (Predictor): Oracle box. If provided and an
+                            oracle was given in construction, this
+                            `oracle` is used in its place.
+        size (int): Number of samples to generate.
+        budget (int): Maximum number of generation tries.
+        kwargs: Optional additional arguments.
+    Returns:
+        numpy.ndarray: Generate samples labelled by `oracle`.
+                        Label is in last column.
+    &#34;&#34;&#34;
+    rules = kwargs[&#39;rules&#39;]
+    types = self.__compute_types(sample)
+    distributions, populations = self.__compute_distributions(sample, types)
+    generation_oracle = self.oracle if oracle is None else oracle
+    balance_ratio = generation_oracle.predict(sample).round().mean()
+    generated_sample = self.__generate_sample(sample, distributions, types, populations, generation_oracle,
+                                              generation_budget=budget,
+                                              size=size, rules=rules, output_mean=balance_ratio)
+
+    return generated_sample</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="generators.choice" href="#generators.choice">choice</a></code></li>
+<li><code><a title="generators.random" href="#generators.random">random</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="generators.BudgedExhaustedException" href="#generators.BudgedExhaustedException">BudgedExhaustedException</a></code></h4>
+</li>
+<li>
+<h4><code><a title="generators.Generator" href="#generators.Generator">Generator</a></code></h4>
+<ul class="">
+<li><code><a title="generators.Generator.generate" href="#generators.Generator.generate">generate</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="generators.TrePanGenerator" href="#generators.TrePanGenerator">TrePanGenerator</a></code></h4>
+<ul class="">
+<li><code><a title="generators.TrePanGenerator.generate" href="#generators.TrePanGenerator.generate">generate</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.1</a>.</p>
+</footer>
+</body>
+</html>

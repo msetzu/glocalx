@@ -288,8 +288,11 @@ class GLocalX:
         Returns:
             GLocalX: Returns this trained instance.
         """
-        x, y = tr_set[:, :-1], self.oracle.predict(tr_set[:, :-1]).astype(int)
-        tr_set[:, -1] = y.reshape(1, -1)
+        x, y = tr_set[:, :-1], tr_set[:, -1]
+        if self.oracle is not None:
+            y = self.oracle.predict(tr_set[:, :-1]).round().astype(int)
+            tr_set[:, -1] = y.reshape(1, -1)
+
         m = len(rules)
         default = int(y.mean().round())
         input_rules = [{rule} for rule in rules]
@@ -404,7 +407,7 @@ class GLocalX:
 
         # Pickle this instance
         if pickle_this:
-            with open(self.name + '.ethica.pickle', 'wb') as log:
+            with open(self.name + '.glocalx.pickle', 'wb') as log:
                 pickle.dump(self, log)
 
         return self

@@ -1,4 +1,4 @@
-"""Generators module. Generate data provided to Ethica."""
+"""Generators module. Generate data provided to GLocalX."""
 from abc import abstractmethod
 
 from numpy import hstack, unique, array, argwhere, concatenate

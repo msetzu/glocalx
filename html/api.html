@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.1" />
 <title>api API documentation</title>
-<meta name="description" content="API module for Ethica." />
+<meta name="description" content="API module for GLocalX." />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,12 +22,12 @@
 <h1 class="title">Module <code>api</code></h1>
 </header>
 <section id="section-intro">
-<p>API module for Ethica.</p>
+<p>API module for GLocalX.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#34;&#34;&#34;API module for Ethica.&#34;&#34;&#34;
+<pre><code class="python">&#34;&#34;&#34;API module for GLocalX.&#34;&#34;&#34;
 import sys
 import os
 import time
@@ -43,9 +43,8 @@ os.environ[&#39;TF_CPP_MIN_LOG_LEVEL&#39;] = &#39;3&#39;
 
 import click
 import logzero
-from numpy import genfromtxt, hstack
+from numpy import genfromtxt, hstack, float as np_float
 from numpy.random import choice
-import pandas as pd
 from tensorflow.keras.models import load_model
 
 from logzero import logger
@@ -59,7 +58,6 @@ from models import Rule
 @click.argument(&#39;tr&#39;, type=click.Path(exists=True))
 @click.option(&#39;-o&#39;, &#39;--oracle&#39;, type=click.Path(exists=True))
 # Input descriptions
-@click.option(&#39;--names&#39;,  default=None, help=&#39;Features names.&#39;)
 @click.option(&#39;-cbs&#39;, &#39;--callbacks&#39;,  default=0.1, help=&#39;Callback step, either int or float. Defaults to 0.1&#39;)
 # Output file
 @click.option(&#39;-m&#39;, &#39;--name&#39;,  default=None, help=&#39;Name of the log files.&#39;)
@@ -86,28 +84,25 @@ from models import Rule
 def cl_run(rules, tr, generate=None, oracle=None, batch=128, alpha=0.5, undersample=1.0,
            fidelity_weight=1., complexity_weight=1., global_direction=False,
            intersect=&#39;coverage&#39;, high_concordance=False, strong_cut=False,
-           callbacks=0.1, name=None, names=None,
-           debug=20):
+           callbacks=0.1, name=None, debug=20):
     run(rules, tr=tr, oracle=oracle, generate=generate,
         intersecting=intersect, batch_size=batch, alpha=alpha, undersample=undersample,
         concordance=high_concordance, strong_cut=strong_cut, global_direction=global_direction,
         fidelity_weight=fidelity_weight, complexity_weight=complexity_weight,
         callbacks_step=callbacks,
-        name=name, names=names,
-        debug=debug)
+        name=name, debug=debug)
 
 
 def run(rules, tr, oracle=None, generate=None,
         intersecting=&#39;coverage&#39;, batch_size=128, alpha=0.5, undersample=1.,
         concordance=False, strong_cut=False, global_direction=False,
         fidelity_weight=1, complexity_weight=1,
-        name=None, names=None,
-        callbacks_step=0.1, debug=20):
-    &#34;&#34;&#34;Run the Ethica framework on a set of rules.
+        name=None, callbacks_step=0.1, debug=20):
+    &#34;&#34;&#34;Run the GLocalX framework on a set of rules.
     Arguments:
         rules (str): JSON file with the train set.
         tr (str): Validation set.
-        oracle (str): Path to the oracle to use.
+        oracle (str): Path to the oracle to use. None to use the dataset labels.
         generate (Union(int, float, None)): Size of the synthetic dataset to use, if not using the training set.
                                             Use float to give size w.r.t. the TR to use.
                                             Defaults to None (use training set).
@@ -121,7 +116,6 @@ def run(rules, tr, oracle=None, generate=None,
         alpha (float): Pruning factor. Defaults to 0.5.
         undersample (float): Percentage of rules to use, if &lt; 1, irrelevant otherwise. Defaults to 1.
         name (str): Name for the output logs.
-        names (str): Features names.
         callbacks_step (Union(int, float)): Callback step, either int or float (percentage). Defaults to 0.1.
         debug (int): Minimum debug level.
         concordance (bool): True to use high concordance, false otherwise. Defaults to False.
@@ -144,19 +138,10 @@ def run(rules, tr, oracle=None, generate=None,
     logzero.loglevel(min_log)
 
     if name is None:
-        name = str(time.time())
+        name = tr + &#39;_&#39; + str(time.time())
     elif os.path.exists(name + &#39;.glocalx.pickle&#39;):
-        logger.info(&#39;Ethica run already existing: &#39; + name + &#39;.glocalx.pickle. Exiting!&#39;)
+        logger.info(&#39;GLocalX run already existing: &#39; + name + &#39;.glocalx.pickle. Exiting!&#39;)
         return
-
-    if names is not None:
-        # For some weird reason &#39;.csv&#39; sometimes becomes &#39;.cs&#39;
-        if names.endswith(&#39;.cs&#39;):
-            names = names + &#39;v&#39;
-    else:
-        # Names stored in data/$name_names.csv
-        names = &#39;data/&#39; + name.split(&#39;.&#39;)[0] + &#39;_names.csv&#39;
-    names = pd.read_csv(names, header=None).values.tolist()[0]
 
     # Info LOG
     logger.info(&#39;Rules: &#39;           + str(rules))
@@ -179,15 +164,17 @@ def run(rules, tr, oracle=None, generate=None,
     output_dic[&#39;undersample&#39;] = undersample
 
     logger.info(&#39;Loading data... &#39;)
-    tr_set = genfromtxt(tr, delimiter=&#39;,&#39;)
+    # Load data and header
+    data = genfromtxt(tr, delimiter=&#39;,&#39;, names=True)
+    names = data.dtype.names
+    tr_set = data.view(np_float).reshape(data.shape + (-1,))
 
-    # Run Ethica
+    # Run GLocalX
     logger.info(&#39;Loading ruleset...&#39;)
     rules = Rule.from_json(rules, names=names)
     rules = list(set(rules))
-    rules = [r for r in rules if len(r) &gt; 0]
-    for r in rules:
-        r.names = names
+    rules = [r for r in rules if len(r) &gt; 0][:10]
+
     if undersample &lt; 1:
         n = len(rules)
         sample_indices_space = range(n)
@@ -226,12 +213,11 @@ def run(rules, tr, oracle=None, generate=None,
             logger.info(&#39;Exiting.&#39;)
             sys.exit(-1)
 
+    n = len(rules)
+    actual_callbacks_step = max(callbacks_step if isinstance(callbacks_step, int) else int(n * callbacks_step), n)
     logger.info(&#39;Merging...&#39;)
     glocalx = GLocalX(oracle=oracle, intersecting=intersecting, name=name, high_concordance=concordance,
                       strong_cut=strong_cut)
-
-    n = len(rules)
-    actual_callbacks_step = max(callbacks_step if isinstance(callbacks_step, int) else int(n * callbacks_step), n)
     glocalx = glocalx.fit(rules, tr_set,
                           batch_size=batch_size if batch_size &gt; 0 else tr_set.shape[0],
                           global_direction=global_direction,
@@ -336,14 +322,14 @@ array(['pooh', 'pooh', 'pooh', 'Christopher', 'piglet'], # random
 </code></pre></div>
 </dd>
 <dt id="api.run"><code class="name flex">
-<span>def <span class="ident">run</span></span>(<span>rules, tr, oracle=None, generate=None, intersecting='coverage', batch_size=128, alpha=0.5, undersample=1.0, concordance=False, strong_cut=False, global_direction=False, fidelity_weight=1, complexity_weight=1, name=None, names=None, callbacks_step=0.1, debug=20)</span>
+<span>def <span class="ident">run</span></span>(<span>rules, tr, oracle=None, generate=None, intersecting='coverage', batch_size=128, alpha=0.5, undersample=1.0, concordance=False, strong_cut=False, global_direction=False, fidelity_weight=1, complexity_weight=1, name=None, callbacks_step=0.1, debug=20)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Run the Ethica framework on a set of rules.</p>
+<div class="desc"><p>Run the GLocalX framework on a set of rules.</p>
 <h2 id="arguments">Arguments</h2>
 <p>rules (str): JSON file with the train set.
 tr (str): Validation set.
-oracle (str): Path to the oracle to use.
+oracle (str): Path to the oracle to use. None to use the dataset labels.
 generate (Union(int, float, None)): Size of the synthetic dataset to use, if not using the training set.
 Use float to give size w.r.t. the TR to use.
 Defaults to None (use training set).
@@ -357,7 +343,6 @@ complexity_weight (float): Complexity weight. Defaults to 1.
 alpha (float): Pruning factor. Defaults to 0.5.
 undersample (float): Percentage of rules to use, if &lt; 1, irrelevant otherwise. Defaults to 1.
 name (str): Name for the output logs.
-names (str): Features names.
 callbacks_step (Union(int, float)): Callback step, either int or float (percentage). Defaults to 0.1.
 debug (int): Minimum debug level.
 concordance (bool): True to use high concordance, false otherwise. Defaults to False.
@@ -370,13 +355,12 @@ strong_cut (bool): True for a strong cut, false otherwise. Defaults to False.</p
         intersecting=&#39;coverage&#39;, batch_size=128, alpha=0.5, undersample=1.,
         concordance=False, strong_cut=False, global_direction=False,
         fidelity_weight=1, complexity_weight=1,
-        name=None, names=None,
-        callbacks_step=0.1, debug=20):
-    &#34;&#34;&#34;Run the Ethica framework on a set of rules.
+        name=None, callbacks_step=0.1, debug=20):
+    &#34;&#34;&#34;Run the GLocalX framework on a set of rules.
     Arguments:
         rules (str): JSON file with the train set.
         tr (str): Validation set.
-        oracle (str): Path to the oracle to use.
+        oracle (str): Path to the oracle to use. None to use the dataset labels.
         generate (Union(int, float, None)): Size of the synthetic dataset to use, if not using the training set.
                                             Use float to give size w.r.t. the TR to use.
                                             Defaults to None (use training set).
@@ -390,7 +374,6 @@ strong_cut (bool): True for a strong cut, false otherwise. Defaults to False.</p
         alpha (float): Pruning factor. Defaults to 0.5.
         undersample (float): Percentage of rules to use, if &lt; 1, irrelevant otherwise. Defaults to 1.
         name (str): Name for the output logs.
-        names (str): Features names.
         callbacks_step (Union(int, float)): Callback step, either int or float (percentage). Defaults to 0.1.
         debug (int): Minimum debug level.
         concordance (bool): True to use high concordance, false otherwise. Defaults to False.
@@ -413,19 +396,10 @@ strong_cut (bool): True for a strong cut, false otherwise. Defaults to False.</p
     logzero.loglevel(min_log)
 
     if name is None:
-        name = str(time.time())
+        name = tr + &#39;_&#39; + str(time.time())
     elif os.path.exists(name + &#39;.glocalx.pickle&#39;):
-        logger.info(&#39;Ethica run already existing: &#39; + name + &#39;.glocalx.pickle. Exiting!&#39;)
+        logger.info(&#39;GLocalX run already existing: &#39; + name + &#39;.glocalx.pickle. Exiting!&#39;)
         return
-
-    if names is not None:
-        # For some weird reason &#39;.csv&#39; sometimes becomes &#39;.cs&#39;
-        if names.endswith(&#39;.cs&#39;):
-            names = names + &#39;v&#39;
-    else:
-        # Names stored in data/$name_names.csv
-        names = &#39;data/&#39; + name.split(&#39;.&#39;)[0] + &#39;_names.csv&#39;
-    names = pd.read_csv(names, header=None).values.tolist()[0]
 
     # Info LOG
     logger.info(&#39;Rules: &#39;           + str(rules))
@@ -448,15 +422,17 @@ strong_cut (bool): True for a strong cut, false otherwise. Defaults to False.</p
     output_dic[&#39;undersample&#39;] = undersample
 
     logger.info(&#39;Loading data... &#39;)
-    tr_set = genfromtxt(tr, delimiter=&#39;,&#39;)
+    # Load data and header
+    data = genfromtxt(tr, delimiter=&#39;,&#39;, names=True)
+    names = data.dtype.names
+    tr_set = data.view(np_float).reshape(data.shape + (-1,))
 
-    # Run Ethica
+    # Run GLocalX
     logger.info(&#39;Loading ruleset...&#39;)
     rules = Rule.from_json(rules, names=names)
     rules = list(set(rules))
-    rules = [r for r in rules if len(r) &gt; 0]
-    for r in rules:
-        r.names = names
+    rules = [r for r in rules if len(r) &gt; 0][:10]
+
     if undersample &lt; 1:
         n = len(rules)
         sample_indices_space = range(n)
@@ -495,12 +471,11 @@ strong_cut (bool): True for a strong cut, false otherwise. Defaults to False.</p
             logger.info(&#39;Exiting.&#39;)
             sys.exit(-1)
 
+    n = len(rules)
+    actual_callbacks_step = max(callbacks_step if isinstance(callbacks_step, int) else int(n * callbacks_step), n)
     logger.info(&#39;Merging...&#39;)
     glocalx = GLocalX(oracle=oracle, intersecting=intersecting, name=name, high_concordance=concordance,
                       strong_cut=strong_cut)
-
-    n = len(rules)
-    actual_callbacks_step = max(callbacks_step if isinstance(callbacks_step, int) else int(n * callbacks_step), n)
     glocalx = glocalx.fit(rules, tr_set,
                           batch_size=batch_size if batch_size &gt; 0 else tr_set.shape[0],
                           global_direction=global_direction,

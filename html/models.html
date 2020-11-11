@@ -134,7 +134,7 @@ class Rule(Unit):
         Args:
             features (list): The list of features.
             thresholds (list): The list of thresholds per node in the path.
-            consequence (list): Rules consequences.
+            consequence (int): Rules consequences.
             path (list): Path followed by the rules.
         &#34;&#34;&#34;
         if thresholds is None:
@@ -161,8 +161,6 @@ class Rule(Unit):
                 try:
                     threshold = thresholds[indices_per_feature[feature][0]]
                 except IndexError as e:
-                    print(len(features), len(thresholds), len(indices_per_feature), feature, consequence, len(path))
-                    print(features, thresholds, indices_per_feature, feature, consequence, path)
                     raise e
                 __premises[feature] = (-inf, threshold) if directions_per_feature[feature][0] &lt; 0 else (threshold, inf)
             else:
@@ -479,7 +477,7 @@ w.r.t. the rule. Defaults to Euclidean distance.</dd>
         Args:
             features (list): The list of features.
             thresholds (list): The list of thresholds per node in the path.
-            consequence (list): Rules consequences.
+            consequence (int): Rules consequences.
             path (list): Path followed by the rules.
         &#34;&#34;&#34;
         if thresholds is None:
@@ -506,8 +504,6 @@ w.r.t. the rule. Defaults to Euclidean distance.</dd>
                 try:
                     threshold = thresholds[indices_per_feature[feature][0]]
                 except IndexError as e:
-                    print(len(features), len(thresholds), len(indices_per_feature), feature, consequence, len(path))
-                    print(features, thresholds, indices_per_feature, feature, consequence, path)
                     raise e
                 __premises[feature] = (-inf, threshold) if directions_per_feature[feature][0] &lt; 0 else (threshold, inf)
             else:
@@ -823,7 +819,7 @@ def from_json(cls, json_file, names=None):
 <dd>The list of features.</dd>
 <dt><strong><code>thresholds</code></strong> :&ensp;<code>list</code></dt>
 <dd>The list of thresholds per node in the path.</dd>
-<dt><strong><code>consequence</code></strong> :&ensp;<code>list</code></dt>
+<dt><strong><code>consequence</code></strong> :&ensp;<code>int</code></dt>
 <dd>Rules consequences.</dd>
 <dt><strong><code>path</code></strong> :&ensp;<code>list</code></dt>
 <dd>Path followed by the rules.</dd>
@@ -838,7 +834,7 @@ def fromarrays(cls, features=None, thresholds=None, consequence=None, path=None)
     Args:
         features (list): The list of features.
         thresholds (list): The list of thresholds per node in the path.
-        consequence (list): Rules consequences.
+        consequence (int): Rules consequences.
         path (list): Path followed by the rules.
     &#34;&#34;&#34;
     if thresholds is None:
@@ -865,8 +861,6 @@ def fromarrays(cls, features=None, thresholds=None, consequence=None, path=None)
             try:
                 threshold = thresholds[indices_per_feature[feature][0]]
             except IndexError as e:
-                print(len(features), len(thresholds), len(indices_per_feature), feature, consequence, len(path))
-                print(features, thresholds, indices_per_feature, feature, consequence, path)
                 raise e
             __premises[feature] = (-inf, threshold) if directions_per_feature[feature][0] &lt; 0 else (threshold, inf)
         else:

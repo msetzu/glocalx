@@ -7,7 +7,6 @@ from abc import abstractmethod
 from statistics import harmonic_mean
 
 from numpy import logical_and, argwhere, array, argsort, mean, std, full, vectorize, flip, nan
-import pandas as pd
 from scipy.spatial.distance import hamming
 
 from logzero import logger
@@ -157,19 +156,6 @@ class Evaluator:
         pass
 
     @abstractmethod
-    def score(self, unit, data, target, ids=None):
-        """Score @unit against @data with labels @target.
-        Args:
-            unit (Unit): Unit to score.
-            data (array): Data.
-            target (array): Targets.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
-        Returns:
-            float: Score.
-        """
-        pass
-
-    @abstractmethod
     def covers(self, rule, x):
         """Does @rule cover c?
 
@@ -278,7 +264,7 @@ class DummyEvaluator(Evaluator):
               (float): The unit's fidelity_weight
         """
         if self.oracle is not None or y is None:
-            y = self.oracle.predict(x).squeeze()
+            y = self.oracle.predict(x).round().squeeze()
 
         return binary_fidelity(unit, x, y, self, default=default, ids=ids)
 
@@ -294,8 +280,8 @@ class DummyEvaluator(Evaluator):
         Returns:
               numpy.ndarray: The units fidelity_weight.
         """
-        if self.oracle is not None or y is None or y is None:
-            y = vectorize(lambda c: 1 if c >= .5 else 0)(self.oracle.predict(x).squeeze())
+        if self.oracle is not None:
+            y = vectorize(lambda c: 1 if c >= .5 else 0)(self.oracle.predict(x).round().squeeze())
 
         scores = array([self.binary_fidelity(rule, x, y, default=default) for rule in units])
         coverage = self.coverage(units, x, y)
@@ -326,22 +312,6 @@ class DummyEvaluator(Evaluator):
         fidelity = 1 - hamming(predictions, y) if len(y) > 0 else 0
 
         return fidelity
-
-    def score(self, unit, data, target, ids=None):
-        """Score @unit against @data with labels @target.
-        Args:
-            unit (Unit): Unit to score.
-            data (array): Data.
-            target (array): Targets.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
-        Returns:
-            float: Score.
-        """
-        if self.oracle is not None or target is None:
-            target = self.oracle.predict(data).squeeze()
-        default = round(target.mean() / len(target))
-
-        return self.binary_fidelity(unit, data, target, default=default)
 
 
 class MemEvaluator(Evaluator):
@@ -445,7 +415,7 @@ class MemEvaluator(Evaluator):
               float: The unit's fidelity_weight
         """
         if y is None:
-            y = self.oracle.predict(x).squeeze()
+            y = self.oracle.predict(x).round().squeeze()
 
         if ids is None:
             self.binary_fidelities[unit] = self.binary_fidelities.get(unit, binary_fidelity(unit, x, y, self,
@@ -518,26 +488,6 @@ class MemEvaluator(Evaluator):
 
         return fidelity
 
-    def score(self, unit, data, target, ids=None):
-        """Score @unit against @data with labels @target.
-        Args:
-            unit (Unit): Unit to score.
-            data (array): Data.
-            target (array): Targets.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
-        Returns:
-            float: Score.
-        """
-        if ids is None:
-            ids = array([str(i) for i in range(data.shape[0])])
-        if unit not in self.scores:
-            if self.oracle is not None or target is None:
-                target = self.oracle.predict(data).squeeze()
-
-            self.scores[unit] = self.binary_fidelity(unit, data, target, ids)
-
-        return self.scores[unit]
-
     def bic(self, rules, vl, fidelity_weight=1., complexity_weight=1.):
         """
         Compute the Bayesian Information Criterion for the given `rules` set.
@@ -609,7 +559,7 @@ class MemEvaluator(Evaluator):
 # Framework validation #
 ########################
 def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False):
-    """Validate the given `ethica` instance on the given `tr` dataset.
+    """Validate the given `glocalx` instance on the given `tr` dataset.
     Arguments:
         glocalx (Union(GLocalX, list)): GLocalX object or list of rules.
         oracle (Predictor): Oracle to validate against.
@@ -706,8 +656,5 @@ def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False)
         validation['escore'] = harmonic_mean([validation['fidelity'], validation['simplicity']])
 
         results[alpha] = validation
-
-    results = pd.DataFrame(results)
-    results = results.transpose()
 
     return results

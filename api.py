@@ -1,4 +1,4 @@
-"""API module for Ethica."""
+"""API module for GLocalX."""
 import sys
 import os
 import time
@@ -14,9 +14,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import click
 import logzero
-from numpy import genfromtxt, hstack
+from numpy import genfromtxt, hstack, float as np_float
 from numpy.random import choice
-import pandas as pd
 from tensorflow.keras.models import load_model
 
 from logzero import logger
@@ -30,7 +29,6 @@ from models import Rule
 @click.argument('tr', type=click.Path(exists=True))
 @click.option('-o', '--oracle', type=click.Path(exists=True))
 # Input descriptions
-@click.option('--names',  default=None, help='Features names.')
 @click.option('-cbs', '--callbacks',  default=0.1, help='Callback step, either int or float. Defaults to 0.1')
 # Output file
 @click.option('-m', '--name',  default=None, help='Name of the log files.')
@@ -57,28 +55,25 @@ from models import Rule
 def cl_run(rules, tr, generate=None, oracle=None, batch=128, alpha=0.5, undersample=1.0,
            fidelity_weight=1., complexity_weight=1., global_direction=False,
            intersect='coverage', high_concordance=False, strong_cut=False,
-           callbacks=0.1, name=None, names=None,
-           debug=20):
+           callbacks=0.1, name=None, debug=20):
     run(rules, tr=tr, oracle=oracle, generate=generate,
         intersecting=intersect, batch_size=batch, alpha=alpha, undersample=undersample,
         concordance=high_concordance, strong_cut=strong_cut, global_direction=global_direction,
         fidelity_weight=fidelity_weight, complexity_weight=complexity_weight,
         callbacks_step=callbacks,
-        name=name, names=names,
-        debug=debug)
+        name=name, debug=debug)
 
 
 def run(rules, tr, oracle=None, generate=None,
         intersecting='coverage', batch_size=128, alpha=0.5, undersample=1.,
         concordance=False, strong_cut=False, global_direction=False,
         fidelity_weight=1, complexity_weight=1,
-        name=None, names=None,
-        callbacks_step=0.1, debug=20):
-    """Run the Ethica framework on a set of rules.
+        name=None, callbacks_step=0.1, debug=20):
+    """Run the GLocalX framework on a set of rules.
     Arguments:
         rules (str): JSON file with the train set.
         tr (str): Validation set.
-        oracle (str): Path to the oracle to use.
+        oracle (str): Path to the oracle to use. None to use the dataset labels.
         generate (Union(int, float, None)): Size of the synthetic dataset to use, if not using the training set.
                                             Use float to give size w.r.t. the TR to use.
                                             Defaults to None (use training set).
@@ -92,7 +87,6 @@ def run(rules, tr, oracle=None, generate=None,
         alpha (float): Pruning factor. Defaults to 0.5.
         undersample (float): Percentage of rules to use, if < 1, irrelevant otherwise. Defaults to 1.
         name (str): Name for the output logs.
-        names (str): Features names.
         callbacks_step (Union(int, float)): Callback step, either int or float (percentage). Defaults to 0.1.
         debug (int): Minimum debug level.
         concordance (bool): True to use high concordance, false otherwise. Defaults to False.
@@ -115,19 +109,10 @@ def run(rules, tr, oracle=None, generate=None,
     logzero.loglevel(min_log)
 
     if name is None:
-        name = str(time.time())
+        name = tr + '_' + str(time.time())
     elif os.path.exists(name + '.glocalx.pickle'):
-        logger.info('Ethica run already existing: ' + name + '.glocalx.pickle. Exiting!')
+        logger.info('GLocalX run already existing: ' + name + '.glocalx.pickle. Exiting!')
         return
-
-    if names is not None:
-        # For some weird reason '.csv' sometimes becomes '.cs'
-        if names.endswith('.cs'):
-            names = names + 'v'
-    else:
-        # Names stored in data/$name_names.csv
-        names = 'data/' + name.split('.')[0] + '_names.csv'
-    names = pd.read_csv(names, header=None).values.tolist()[0]
 
     # Info LOG
     logger.info('Rules: '           + str(rules))
@@ -150,15 +135,17 @@ def run(rules, tr, oracle=None, generate=None,
     output_dic['undersample'] = undersample
 
     logger.info('Loading data... ')
-    tr_set = genfromtxt(tr, delimiter=',')
+    # Load data and header
+    data = genfromtxt(tr, delimiter=',', names=True)
+    names = data.dtype.names
+    tr_set = data.view(np_float).reshape(data.shape + (-1,))
 
-    # Run Ethica
+    # Run GLocalX
     logger.info('Loading ruleset...')
     rules = Rule.from_json(rules, names=names)
     rules = list(set(rules))
-    rules = [r for r in rules if len(r) > 0]
-    for r in rules:
-        r.names = names
+    rules = [r for r in rules if len(r) > 0][:10]
+
     if undersample < 1:
         n = len(rules)
         sample_indices_space = range(n)
@@ -197,12 +184,11 @@ def run(rules, tr, oracle=None, generate=None,
             logger.info('Exiting.')
             sys.exit(-1)
 
+    n = len(rules)
+    actual_callbacks_step = max(callbacks_step if isinstance(callbacks_step, int) else int(n * callbacks_step), n)
     logger.info('Merging...')
     glocalx = GLocalX(oracle=oracle, intersecting=intersecting, name=name, high_concordance=concordance,
                       strong_cut=strong_cut)
-
-    n = len(rules)
-    actual_callbacks_step = max(callbacks_step if isinstance(callbacks_step, int) else int(n * callbacks_step), n)
     glocalx = glocalx.fit(rules, tr_set,
                           batch_size=batch_size if batch_size > 0 else tr_set.shape[0],
                           global_direction=global_direction,

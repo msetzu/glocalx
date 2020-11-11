@@ -316,8 +316,11 @@ class GLocalX:
         Returns:
             GLocalX: Returns this trained instance.
         &#34;&#34;&#34;
-        x, y = tr_set[:, :-1], self.oracle.predict(tr_set[:, :-1]).astype(int)
-        tr_set[:, -1] = y.reshape(1, -1)
+        x, y = tr_set[:, :-1], tr_set[:, -1]
+        if self.oracle is not None:
+            y = self.oracle.predict(tr_set[:, :-1]).round().astype(int)
+            tr_set[:, -1] = y.reshape(1, -1)
+
         m = len(rules)
         default = int(y.mean().round())
         input_rules = [{rule} for rule in rules]
@@ -393,7 +396,7 @@ class GLocalX:
                     rejections += 1
 
             # Callbacks
-            if (iteration + 1) % callback_step == 0 and merged:
+            if (iteration + 1) % callback_step == 0 and merged and callbacks is not None:
                 logger.debug(self.name + &#39; Callbacks... &#39;)
                 nr_rules_union, nr_rules_merge = len(AB_union), len(AB_merge)
                 coverage_union = self.evaluator.coverage(AB_union, x, ids=batch_ids)
@@ -432,7 +435,7 @@ class GLocalX:
 
         # Pickle this instance
         if pickle_this:
-            with open(self.name + &#39;.ethica.pickle&#39;, &#39;wb&#39;) as log:
+            with open(self.name + &#39;.glocalx.pickle&#39;, &#39;wb&#39;) as log:
                 pickle.dump(self, log)
 
         return self
@@ -780,8 +783,11 @@ class GLocalX:
         Returns:
             GLocalX: Returns this trained instance.
         &#34;&#34;&#34;
-        x, y = tr_set[:, :-1], self.oracle.predict(tr_set[:, :-1]).astype(int)
-        tr_set[:, -1] = y.reshape(1, -1)
+        x, y = tr_set[:, :-1], tr_set[:, -1]
+        if self.oracle is not None:
+            y = self.oracle.predict(tr_set[:, :-1]).round().astype(int)
+            tr_set[:, -1] = y.reshape(1, -1)
+
         m = len(rules)
         default = int(y.mean().round())
         input_rules = [{rule} for rule in rules]
@@ -857,7 +863,7 @@ class GLocalX:
                     rejections += 1
 
             # Callbacks
-            if (iteration + 1) % callback_step == 0 and merged:
+            if (iteration + 1) % callback_step == 0 and merged and callbacks is not None:
                 logger.debug(self.name + &#39; Callbacks... &#39;)
                 nr_rules_union, nr_rules_merge = len(AB_union), len(AB_merge)
                 coverage_union = self.evaluator.coverage(AB_union, x, ids=batch_ids)
@@ -896,7 +902,7 @@ class GLocalX:
 
         # Pickle this instance
         if pickle_this:
-            with open(self.name + &#39;.ethica.pickle&#39;, &#39;wb&#39;) as log:
+            with open(self.name + &#39;.glocalx.pickle&#39;, &#39;wb&#39;) as log:
                 pickle.dump(self, log)
 
         return self
@@ -1078,8 +1084,11 @@ Defaults to False.</dd>
     Returns:
         GLocalX: Returns this trained instance.
     &#34;&#34;&#34;
-    x, y = tr_set[:, :-1], self.oracle.predict(tr_set[:, :-1]).astype(int)
-    tr_set[:, -1] = y.reshape(1, -1)
+    x, y = tr_set[:, :-1], tr_set[:, -1]
+    if self.oracle is not None:
+        y = self.oracle.predict(tr_set[:, :-1]).round().astype(int)
+        tr_set[:, -1] = y.reshape(1, -1)
+
     m = len(rules)
     default = int(y.mean().round())
     input_rules = [{rule} for rule in rules]
@@ -1155,7 +1164,7 @@ Defaults to False.</dd>
                 rejections += 1
 
         # Callbacks
-        if (iteration + 1) % callback_step == 0 and merged:
+        if (iteration + 1) % callback_step == 0 and merged and callbacks is not None:
             logger.debug(self.name + &#39; Callbacks... &#39;)
             nr_rules_union, nr_rules_merge = len(AB_union), len(AB_merge)
             coverage_union = self.evaluator.coverage(AB_union, x, ids=batch_ids)
@@ -1194,7 +1203,7 @@ Defaults to False.</dd>
 
     # Pickle this instance
     if pickle_this:
-        with open(self.name + &#39;.ethica.pickle&#39;, &#39;wb&#39;) as log:
+        with open(self.name + &#39;.glocalx.pickle&#39;, &#39;wb&#39;) as log:
             pickle.dump(self, log)
 
     return self</code></pre>

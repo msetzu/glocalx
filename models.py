@@ -105,7 +105,7 @@ class Rule(Unit):
         Args:
             features (list): The list of features.
             thresholds (list): The list of thresholds per node in the path.
-            consequence (list): Rules consequences.
+            consequence (int): Rules consequences.
             path (list): Path followed by the rules.
         """
         if thresholds is None:
@@ -132,8 +132,6 @@ class Rule(Unit):
                 try:
                     threshold = thresholds[indices_per_feature[feature][0]]
                 except IndexError as e:
-                    print(len(features), len(thresholds), len(indices_per_feature), feature, consequence, len(path))
-                    print(features, thresholds, indices_per_feature, feature, consequence, path)
                     raise e
                 __premises[feature] = (-inf, threshold) if directions_per_feature[feature][0] < 0 else (threshold, inf)
             else:

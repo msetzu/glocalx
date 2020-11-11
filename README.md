@@ -44,7 +44,7 @@ from models import Rule
 logzero.loglevel(logzero.logging.INFO)
 shut_up_tensorflow()
 
-# Load black box
+# Load black box: optional! Use black_box = None to use the dataset labels
 black_box = load_model('data/dummy/dummy_model.h5')
 # Load data and header
 data = genfromtxt('data/dummy/dummy_dataset.csv', delimiter=',', names=True)
@@ -105,7 +105,7 @@ Options:
 
 ```
 
-A minimal run simply requires a set of local input rules, a training set and a black box:
+A minimal run simply requires a set of local input rules, a training set and (optionally) a black box:
 
 ```bash
 python3.8 apy.py my_rules.json training_set.csv my_black_box.h5 \
@@ -158,7 +158,7 @@ Each rule in the list is a dictionary with an arbitrary (greater than 2) premise
 
 #### Black boxes [`/data/dummy/dummy_model.h5`]
 
-Black boxes are to be stored in a `hdf5` format if given through command line. If given programmatically instead, it suffices that they implement the `Predictor` interface:
+Black boxes (if used) are to be stored in a `hdf5` format if given through command line. If given programmatically instead, it suffices that they implement the `Predictor` interface:
 
 ```python
 class Predictor:

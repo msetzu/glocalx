@@ -39,7 +39,6 @@ from abc import abstractmethod
 from statistics import harmonic_mean
 
 from numpy import logical_and, argwhere, array, argsort, mean, std, full, vectorize, flip, nan
-import pandas as pd
 from scipy.spatial.distance import hamming
 
 from logzero import logger
@@ -189,19 +188,6 @@ class Evaluator:
         pass
 
     @abstractmethod
-    def score(self, unit, data, target, ids=None):
-        &#34;&#34;&#34;Score @unit against @data with labels @target.
-        Args:
-            unit (Unit): Unit to score.
-            data (array): Data.
-            target (array): Targets.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
-        Returns:
-            float: Score.
-        &#34;&#34;&#34;
-        pass
-
-    @abstractmethod
     def covers(self, rule, x):
         &#34;&#34;&#34;Does @rule cover c?
 
@@ -310,7 +296,7 @@ class DummyEvaluator(Evaluator):
               (float): The unit&#39;s fidelity_weight
         &#34;&#34;&#34;
         if self.oracle is not None or y is None:
-            y = self.oracle.predict(x).squeeze()
+            y = self.oracle.predict(x).round().squeeze()
 
         return binary_fidelity(unit, x, y, self, default=default, ids=ids)
 
@@ -326,8 +312,8 @@ class DummyEvaluator(Evaluator):
         Returns:
               numpy.ndarray: The units fidelity_weight.
         &#34;&#34;&#34;
-        if self.oracle is not None or y is None or y is None:
-            y = vectorize(lambda c: 1 if c &gt;= .5 else 0)(self.oracle.predict(x).squeeze())
+        if self.oracle is not None:
+            y = vectorize(lambda c: 1 if c &gt;= .5 else 0)(self.oracle.predict(x).round().squeeze())
 
         scores = array([self.binary_fidelity(rule, x, y, default=default) for rule in units])
         coverage = self.coverage(units, x, y)
@@ -358,22 +344,6 @@ class DummyEvaluator(Evaluator):
         fidelity = 1 - hamming(predictions, y) if len(y) &gt; 0 else 0
 
         return fidelity
-
-    def score(self, unit, data, target, ids=None):
-        &#34;&#34;&#34;Score @unit against @data with labels @target.
-        Args:
-            unit (Unit): Unit to score.
-            data (array): Data.
-            target (array): Targets.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
-        Returns:
-            float: Score.
-        &#34;&#34;&#34;
-        if self.oracle is not None or target is None:
-            target = self.oracle.predict(data).squeeze()
-        default = round(target.mean() / len(target))
-
-        return self.binary_fidelity(unit, data, target, default=default)
 
 
 class MemEvaluator(Evaluator):
@@ -477,7 +447,7 @@ class MemEvaluator(Evaluator):
               float: The unit&#39;s fidelity_weight
         &#34;&#34;&#34;
         if y is None:
-            y = self.oracle.predict(x).squeeze()
+            y = self.oracle.predict(x).round().squeeze()
 
         if ids is None:
             self.binary_fidelities[unit] = self.binary_fidelities.get(unit, binary_fidelity(unit, x, y, self,
@@ -550,26 +520,6 @@ class MemEvaluator(Evaluator):
 
         return fidelity
 
-    def score(self, unit, data, target, ids=None):
-        &#34;&#34;&#34;Score @unit against @data with labels @target.
-        Args:
-            unit (Unit): Unit to score.
-            data (array): Data.
-            target (array): Targets.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
-        Returns:
-            float: Score.
-        &#34;&#34;&#34;
-        if ids is None:
-            ids = array([str(i) for i in range(data.shape[0])])
-        if unit not in self.scores:
-            if self.oracle is not None or target is None:
-                target = self.oracle.predict(data).squeeze()
-
-            self.scores[unit] = self.binary_fidelity(unit, data, target, ids)
-
-        return self.scores[unit]
-
     def bic(self, rules, vl, fidelity_weight=1., complexity_weight=1.):
         &#34;&#34;&#34;
         Compute the Bayesian Information Criterion for the given `rules` set.
@@ -641,7 +591,7 @@ class MemEvaluator(Evaluator):
 # Framework validation #
 ########################
 def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False):
-    &#34;&#34;&#34;Validate the given `ethica` instance on the given `tr` dataset.
+    &#34;&#34;&#34;Validate the given `glocalx` instance on the given `tr` dataset.
     Arguments:
         glocalx (Union(GLocalX, list)): GLocalX object or list of rules.
         oracle (Predictor): Oracle to validate against.
@@ -738,9 +688,6 @@ def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False)
         validation[&#39;escore&#39;] = harmonic_mean([validation[&#39;fidelity&#39;], validation[&#39;simplicity&#39;]])
 
         results[alpha] = validation
-
-    results = pd.DataFrame(results)
-    results = results.transpose()
 
     return results</code></pre>
 </details>
@@ -933,7 +880,7 @@ def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False)
 <span>def <span class="ident">validate</span></span>(<span>glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Validate the given <code>ethica</code> instance on the given <code>tr</code> dataset.</p>
+<div class="desc"><p>Validate the given <code>glocalx</code> instance on the given <code>tr</code> dataset.</p>
 <h2 id="arguments">Arguments</h2>
 <p>glocalx (Union(GLocalX, list)): GLocalX object or list of rules.
 oracle (Predictor): Oracle to validate against.
@@ -959,7 +906,7 @@ names (set): Groups of variables.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False):
-    &#34;&#34;&#34;Validate the given `ethica` instance on the given `tr` dataset.
+    &#34;&#34;&#34;Validate the given `glocalx` instance on the given `tr` dataset.
     Arguments:
         glocalx (Union(GLocalX, list)): GLocalX object or list of rules.
         oracle (Predictor): Oracle to validate against.
@@ -1056,9 +1003,6 @@ names (set): Groups of variables.</p>
         validation[&#39;escore&#39;] = harmonic_mean([validation[&#39;fidelity&#39;], validation[&#39;simplicity&#39;]])
 
         results[alpha] = validation
-
-    results = pd.DataFrame(results)
-    results = results.transpose()
 
     return results</code></pre>
 </details>
@@ -1161,7 +1105,7 @@ names (set): Groups of variables.</p>
               (float): The unit&#39;s fidelity_weight
         &#34;&#34;&#34;
         if self.oracle is not None or y is None:
-            y = self.oracle.predict(x).squeeze()
+            y = self.oracle.predict(x).round().squeeze()
 
         return binary_fidelity(unit, x, y, self, default=default, ids=ids)
 
@@ -1177,8 +1121,8 @@ names (set): Groups of variables.</p>
         Returns:
               numpy.ndarray: The units fidelity_weight.
         &#34;&#34;&#34;
-        if self.oracle is not None or y is None or y is None:
-            y = vectorize(lambda c: 1 if c &gt;= .5 else 0)(self.oracle.predict(x).squeeze())
+        if self.oracle is not None:
+            y = vectorize(lambda c: 1 if c &gt;= .5 else 0)(self.oracle.predict(x).round().squeeze())
 
         scores = array([self.binary_fidelity(rule, x, y, default=default) for rule in units])
         coverage = self.coverage(units, x, y)
@@ -1208,23 +1152,7 @@ names (set): Groups of variables.</p>
         predictions = array(predictions)
         fidelity = 1 - hamming(predictions, y) if len(y) &gt; 0 else 0
 
-        return fidelity
-
-    def score(self, unit, data, target, ids=None):
-        &#34;&#34;&#34;Score @unit against @data with labels @target.
-        Args:
-            unit (Unit): Unit to score.
-            data (array): Data.
-            target (array): Targets.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
-        Returns:
-            float: Score.
-        &#34;&#34;&#34;
-        if self.oracle is not None or target is None:
-            target = self.oracle.predict(data).squeeze()
-        default = round(target.mean() / len(target))
-
-        return self.binary_fidelity(unit, data, target, default=default)</code></pre>
+        return fidelity</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -1268,7 +1196,7 @@ names (set): Groups of variables.</p>
           (float): The unit&#39;s fidelity_weight
     &#34;&#34;&#34;
     if self.oracle is not None or y is None:
-        y = self.oracle.predict(x).squeeze()
+        y = self.oracle.predict(x).round().squeeze()
 
     return binary_fidelity(unit, x, y, self, default=default, ids=ids)</code></pre>
 </details>
@@ -1313,8 +1241,8 @@ names (set): Groups of variables.</p>
     Returns:
           numpy.ndarray: The units fidelity_weight.
     &#34;&#34;&#34;
-    if self.oracle is not None or y is None or y is None:
-        y = vectorize(lambda c: 1 if c &gt;= .5 else 0)(self.oracle.predict(x).squeeze())
+    if self.oracle is not None:
+        y = vectorize(lambda c: 1 if c &gt;= .5 else 0)(self.oracle.predict(x).round().squeeze())
 
     scores = array([self.binary_fidelity(rule, x, y, default=default) for rule in units])
     coverage = self.coverage(units, x, y)
@@ -1430,7 +1358,6 @@ names (set): Groups of variables.</p>
 <ul class="hlist">
 <li><code><a title="evaluators.Evaluator.bic" href="#evaluators.Evaluator.bic">bic</a></code></li>
 <li><code><a title="evaluators.Evaluator.covers" href="#evaluators.Evaluator.covers">covers</a></code></li>
-<li><code><a title="evaluators.Evaluator.score" href="#evaluators.Evaluator.score">score</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1499,19 +1426,6 @@ names (set): Groups of variables.</p>
             ids (array): Unique identifiers to tell each element in @c apart.
         Returns:
             float: The units fidelity_weight.
-        &#34;&#34;&#34;
-        pass
-
-    @abstractmethod
-    def score(self, unit, data, target, ids=None):
-        &#34;&#34;&#34;Score @unit against @data with labels @target.
-        Args:
-            unit (Unit): Unit to score.
-            data (array): Data.
-            target (array): Targets.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
-        Returns:
-            float: Score.
         &#34;&#34;&#34;
         pass
 
@@ -1783,45 +1697,6 @@ def covers(self, rule, x):
     pass</code></pre>
 </details>
 </dd>
-<dt id="evaluators.Evaluator.score"><code class="name flex">
-<span>def <span class="ident">score</span></span>(<span>self, unit, data, target, ids=None)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Score @unit against @data with labels @target.</p>
-<h2 id="args">Args</h2>
-<dl>
-<dt><strong><code>unit</code></strong> :&ensp;<code>Unit</code></dt>
-<dd>Unit to score.</dd>
-<dt><strong><code>data</code></strong> :&ensp;<code>array</code></dt>
-<dd>Data.</dd>
-<dt><strong><code>target</code></strong> :&ensp;<code>array</code></dt>
-<dd>Targets.</dd>
-<dt><strong><code>ids</code></strong> :&ensp;<code>array</code></dt>
-<dd>Unique identifiers to tell each element in @patterns apart.</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>float</code></dt>
-<dd>Score.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@abstractmethod
-def score(self, unit, data, target, ids=None):
-    &#34;&#34;&#34;Score @unit against @data with labels @target.
-    Args:
-        unit (Unit): Unit to score.
-        data (array): Data.
-        target (array): Targets.
-        ids (array): Unique identifiers to tell each element in @patterns apart.
-    Returns:
-        float: Score.
-    &#34;&#34;&#34;
-    pass</code></pre>
-</details>
-</dd>
 </dl>
 </dd>
 <dt id="evaluators.MemEvaluator"><code class="flex name class">
@@ -1936,7 +1811,7 @@ def score(self, unit, data, target, ids=None):
               float: The unit&#39;s fidelity_weight
         &#34;&#34;&#34;
         if y is None:
-            y = self.oracle.predict(x).squeeze()
+            y = self.oracle.predict(x).round().squeeze()
 
         if ids is None:
             self.binary_fidelities[unit] = self.binary_fidelities.get(unit, binary_fidelity(unit, x, y, self,
@@ -2008,26 +1883,6 @@ def score(self, unit, data, target, ids=None):
         fidelity = 1 - hamming(predictions, y) if len(y) &gt; 0 else 0
 
         return fidelity
-
-    def score(self, unit, data, target, ids=None):
-        &#34;&#34;&#34;Score @unit against @data with labels @target.
-        Args:
-            unit (Unit): Unit to score.
-            data (array): Data.
-            target (array): Targets.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
-        Returns:
-            float: Score.
-        &#34;&#34;&#34;
-        if ids is None:
-            ids = array([str(i) for i in range(data.shape[0])])
-        if unit not in self.scores:
-            if self.oracle is not None or target is None:
-                target = self.oracle.predict(data).squeeze()
-
-            self.scores[unit] = self.binary_fidelity(unit, data, target, ids)
-
-        return self.scores[unit]
 
     def bic(self, rules, vl, fidelity_weight=1., complexity_weight=1.):
         &#34;&#34;&#34;
@@ -2196,7 +2051,7 @@ just the BIC otherwise.</dd>
           float: The unit&#39;s fidelity_weight
     &#34;&#34;&#34;
     if y is None:
-        y = self.oracle.predict(x).squeeze()
+        y = self.oracle.predict(x).round().squeeze()
 
     if ids is None:
         self.binary_fidelities[unit] = self.binary_fidelities.get(unit, binary_fidelity(unit, x, y, self,
@@ -2477,7 +2332,6 @@ just the BIC otherwise.</dd>
 <ul class="hlist">
 <li><code><a title="evaluators.Evaluator.coverage_size" href="#evaluators.Evaluator.coverage_size">coverage_size</a></code></li>
 <li><code><a title="evaluators.Evaluator.covers" href="#evaluators.Evaluator.covers">covers</a></code></li>
-<li><code><a title="evaluators.Evaluator.score" href="#evaluators.Evaluator.score">score</a></code></li>
 </ul>
 </li>
 </ul>
@@ -2520,7 +2374,6 @@ just the BIC otherwise.</dd>
 <li><code><a title="evaluators.Evaluator.coverage" href="#evaluators.Evaluator.coverage">coverage</a></code></li>
 <li><code><a title="evaluators.Evaluator.coverage_size" href="#evaluators.Evaluator.coverage_size">coverage_size</a></code></li>
 <li><code><a title="evaluators.Evaluator.covers" href="#evaluators.Evaluator.covers">covers</a></code></li>
-<li><code><a title="evaluators.Evaluator.score" href="#evaluators.Evaluator.score">score</a></code></li>
 </ul>
 </li>
 <li>

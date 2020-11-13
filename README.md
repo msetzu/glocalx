@@ -191,6 +191,28 @@ The work is currently under submission, we'll update with a citable reference an
 
 The `fit()` function provides a `callbacks` parameter to add any callbacks you desire to be invoked every `callbacks_step` iterations. The callback should implement the `callbacks.Callback` interface. You can find the set of parameters available to the callback in `glocalx.GLocalX.fit()`.
 
+#### Serialization and deserialization
+You can dump to disk and load `GLocalX` instances and their output with the `Rule` object and the `serialization` module:
+```python
+from models import Rule
+import serialization
+
+rules_only_json = 'input_rules.json'
+run_file = 'my_run.glocalx.json'
+
+# Load input rules
+rules = Rule.from_json(rules_only_json)
+
+# Load GLocalX output
+glocalx_output = serialization.load_run(run_file)
+
+# Load a GLocalX instance from a set of rules, regardless of whether they come from an actual run or not!
+# From a GLocalX run...
+glocalx = serialization.load_glocalx(run_file, is_glocalx_run=True)
+# From a 
+glocalx = serialization.load_glocalx(rules_only_json, is_glocalx_run=False)
+```
+
 #### Extending the `merge` function
 
 To override the merge function, simply extend the `glocalx.GLocalX` object and override the `merge` function with the following signature:
@@ -206,7 +228,13 @@ where `A` and `B` are the sets of `models.Rule` you are merging, `x` is the trai
 The `distance` between explanations is computed by the `evaluators.Evaluator`  objects. To override it, override either the `evaluators.DummyEvaluator` or `evaluators.MemEvaluator` object with the following signature:
 
 ```python
-distance(self, A:set, B:set, x:numpy.ndarray, ids:numpy.ndarray)
+distance(self, A:set, B:set, x:numpy.ndarray, ids:numpy.ndarray) -> numpy.ndarray
 ```
 
 where `A`, `B` are the two (sets of) explanation(s), `x` is the training data and `ids` are the ids for the current batch.
+
+#### Extending the merge/acceptance
+Whether a merge is accepted or rejected is decided by the `glocalx.GLocalX.accept_merge()` function with signature:
+```python
+accept_merge(union:set, merge:set, **kwargs) -> bool
+```

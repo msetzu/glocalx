@@ -1,6 +1,5 @@
 from abc import abstractmethod
 from collections import defaultdict
-from copy import deepcopy
 from functools import reduce
 from itertools import product
 import os
@@ -14,9 +13,9 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from logzero import logger
 
-from numpy import argmax, logical_and, mean, std, percentile, array
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
+import numpy as np
 
 from evaluators import MemEvaluator
 from callbacks import final_rule_dump_cb as final_rule_dump_callback
@@ -31,9 +30,9 @@ class Predictor:
         Predict instance(s) `x`
 
         Args:
-            x (ndarray): The instance(s) to predict
+            x (np.array): The instance(s) to predict
         Returns:
-            numpy.ndarray: Array of predictions
+            numpy.array: Array of predictions
         """
         pass
 
@@ -82,10 +81,10 @@ class GLocalX:
         """
         Sample `sample_size` objects from `x`.
         Args:
-            y (ndarray): Labels.
+            y (np.array): Labels.
             sample_size (int): Number of samples.
         Returns:
-            numpy.ndarray: Indices of the sampled data.
+            numpy.np.array: Indices of the sampled data.
         """
         idx_train, *rest = train_test_split(range(y.size), shuffle=True, stratify=y, train_size=sample_size)
 
@@ -120,7 +119,7 @@ class GLocalX:
                     a_intersecting_b = self.evaluator.intersecting[(b, a)]
                 elif not ((b, a) in self.evaluator.intersecting or (a, b) in self.evaluator.intersecting):
                     if self.intersecting == 'coverage':
-                        a_intersecting_b = (logical_and(coverage_a, coverage_b)).any()
+                        a_intersecting_b = (np.logical_and(coverage_a, coverage_b)).any()
                     else:
                         a_intersecting_b = a & b
                     self.evaluator.intersecting[(a, b)] = a_intersecting_b
@@ -150,6 +149,38 @@ class GLocalX:
 
         return conflicting_groups, non_conflicting_groups, disjoint
 
+    def accept_merge(self, union, merge, **kwargs):
+        """
+        Decide whether to accept or reject the merge `merge`
+        Args:
+            union (set): The explanations' union
+            merge (set): The explanations' merge
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            bool: True to accept, False otherwise
+        """
+        data = kwargs['data']
+        fidelity_weight, complexity_weight = kwargs['fidelity_weight'], kwargs['complexity_weight']
+        non_merging_boundary = kwargs['non_merging_boundary']
+
+        # BIC computation
+        bic_union = self.evaluator.bic(union, data,
+                                       fidelity_weight=fidelity_weight, complexity_weight=complexity_weight)
+        bic_merge = self.evaluator.bic(merge, data,
+                                       fidelity_weight=fidelity_weight, complexity_weight=complexity_weight)
+        bic_union_validation, bic_merge_validation = bic_union, bic_merge
+        if kwargs['global_direction']:
+            union_boundary = set(reduce(lambda b, a: a.union(b), [union] + non_merging_boundary, set()))
+            merge_boundary = set(reduce(lambda b, a: a.union(b), [merge] + non_merging_boundary, set()))
+
+            bic_union_global = self.evaluator.bic(union_boundary, data)
+            bic_merge_global = self.evaluator.bic(merge_boundary, data)
+
+            bic_union_validation, bic_merge_validation = bic_union_global, bic_merge_global
+
+        return bic_merge_validation <= bic_union_validation
+
     def _cut(self, conflicting_group, x, y):
         """
         Cut the provided `conflicting_groups`. Each conflicting group is
@@ -158,8 +189,8 @@ class GLocalX:
         rule in the group. A non-king rule is cut each time is designed as such.
         Arguments:
             conflicting_group (iterable): Set of conflicting groups.
-            x (ndarray): Data.
-            y (ndarray): Labels.
+            x (np.array): Data.
+            y (np.array): Labels.
         Returns:
             List: List of rules with minimized conflict.
         """
@@ -170,9 +201,9 @@ class GLocalX:
         cut_rules = set()
         default = int(y.mean().round())
         # Set ids to None to measure global fidelity_weight
-        fidelities = array([self.evaluator.binary_fidelity(rule, x, y, default=default, ids=None)
-                            for rule in conflicting_group_list])
-        dominant_rule = conflicting_group_list[argmax(fidelities).item(0)]
+        fidelities = np.array([self.evaluator.binary_fidelity(rule, x, y, default=default, ids=None)
+                               for rule in conflicting_group_list])
+        dominant_rule = conflicting_group_list[np.argmax(fidelities).item(0)]
         cut_rules.add(dominant_rule)
 
         for rule in conflicting_group - {dominant_rule}:
@@ -194,8 +225,8 @@ class GLocalX:
         Join concordant rules.
         Arguments:
             rules (iterable): List of sets of conflicting groups.
-            x (ndarray): Data.
-            y (ndarray): Labels.
+            x (np.array): Data.
+            y (np.array): Labels.
         Returns:
             set: List of rules with minimized conflict.
         """
@@ -213,8 +244,8 @@ class GLocalX:
 
         default = int(y.mean().round())
         # ids set to None to measure global fidelity_weight
-        fidelities = array([self.evaluator.binary_fidelity(r, x, y, default=default, ids=None) for r in rules_list])
-        best_rule = rules_list[argmax(fidelities).item(0)]
+        fidelities = np.array([self.evaluator.binary_fidelity(r, x, y, default=default, ids=None) for r in rules_list])
+        best_rule = rules_list[np.argmax(fidelities).item(0)]
 
         # Features shared by all
         shared_features = {f: ranges_per_feature[f] for f in ranges_per_feature
@@ -240,8 +271,8 @@ class GLocalX:
         Args:
             A (set): Set of rules.
             B (set): Set of rules.
-            x (ndarray): Data.
-            y (ndarray): Labels.
+            x (np.array): Data.
+            y (np.array): Labels.
             ids (iterable): Ids of the records.
         Returns:
             set: Set of merged rules.
@@ -272,7 +303,7 @@ class GLocalX:
         Train GLocalX on the given `rules`.
         Args:
             rules (list): List of rules.
-            tr_set (ndarray): Training set (records).
+            tr_set (np.array): Training set (records).
             batch_size (int): Batch size. Defaults to 128.
             global_direction (bool): False to compute the BIC on the data batch,
                                     True to compute it on the whole validation set.
@@ -317,7 +348,7 @@ class GLocalX:
             distances = [(i, j, self.evaluator.distance(self.boundary[i], self.boundary[j], x))
                          for i, j in candidates_indices]
             logger.debug(self.name + '|  sorting candidates queue')
-            candidates = sorted(distances, key=lambda c: c[2][0])
+            candidates = sorted(distances, key=lambda c: c[2])
             # No available candidates, distances go from 0 to 1
             if len(candidates) == 0 or candidates[0][-1][0] == 1:
                 break
@@ -326,7 +357,6 @@ class GLocalX:
             batch_ids = GLocalX.batch(y, sample_size=batch_size)
             # Explore candidates
             rejections = 0
-            merge_difference = set()
             A, B, AB_union, AB_merge = None, None, None, None
             logger.debug(self.name + ' creating fine boundary')
             self.fine_boundary = set(reduce(lambda b, a: a.union(b), self.boundary, set()))
@@ -335,26 +365,12 @@ class GLocalX:
                 AB_union = A | B
                 AB_merge = self.merge(A, B, x, y, ids=batch_ids)
                 logger.debug(self.name + ' merged candidate ' + str(rejections))
-                merge_difference = deepcopy(AB_union - AB_merge)
                 # Boundary without the potentially merging theories
                 non_merging_boundary = [self.boundary[k] for k in range(self.boundary_len) if k != i and k != j]
 
-                # BIC computation
-                bic_union = self.evaluator.bic(AB_union, tr_set,
-                                               fidelity_weight=fidelity_weight, complexity_weight=complexity_weight)
-                bic_merge = self.evaluator.bic(AB_merge, tr_set,
-                                               fidelity_weight=fidelity_weight, complexity_weight=complexity_weight)
-                bic_union_validation, bic_merge_validation = bic_union, bic_merge
-                if global_direction:
-                    union_boundary = set(reduce(lambda b, a: a.union(b), [AB_union] + non_merging_boundary, set()))
-                    merge_boundary = set(reduce(lambda b, a: a.union(b), [AB_merge] + non_merging_boundary, set()))
-
-                    bic_union_global = self.evaluator.bic(union_boundary, tr_set)
-                    bic_merge_global = self.evaluator.bic(merge_boundary, tr_set)
-
-                    bic_union_validation, bic_merge_validation = bic_union_global, bic_merge_global
-
-                if bic_merge_validation <= bic_union_validation:
+                if self.accept_merge(AB_union, AB_merge, data=tr_set, global_direction=global_direction,
+                                     non_merging_boundary=non_merging_boundary, fidelity_weight=fidelity_weight,
+                                     complexity_weight=complexity_weight):
                     merged = True
                     rejections_list.append(rejections)
                     logger.debug(self.name + ' Merged candidate ' + str(rejections))
@@ -373,10 +389,10 @@ class GLocalX:
                 nr_rules_union, nr_rules_merge = len(AB_union), len(AB_merge)
                 coverage_union = self.evaluator.coverage(AB_union, x, ids=batch_ids)
                 coverage_merge = self.evaluator.coverage(AB_merge, x, ids=batch_ids)
-                union_mean_rules_len = mean([len(r) for r in AB_union])
-                union_std_rules_len = std([len(r) for r in AB_union])
-                merge_mean_rules_len = mean([len(r) for r in AB_merge])
-                merge_std_rules_len = std([len(r) for r in AB_merge])
+                union_mean_rules_len = np.mean([len(r) for r in AB_union])
+                union_std_rules_len = np.std([len(r) for r in AB_union])
+                merge_mean_rules_len = np.mean([len(r) for r in AB_merge])
+                merge_std_rules_len = np.std([len(r) for r in AB_merge])
                 self.fine_boundary = set(reduce(lambda b, a: a.union(b), self.boundary, set()))
                 fine_boundary_size = len(self.fine_boundary)
 
@@ -384,7 +400,7 @@ class GLocalX:
                     # noinspection PyUnboundLocalVariable
                     callback(self, iteration=iteration, x=x, y=y, default=default,
                              callbacks_step=callback_step,
-                             bic_union=bic_union, bic_merge=bic_merge, winner=(i, j),
+                             winner=(i, j),
                              nr_rules_union=nr_rules_union, nr_rules_merge=nr_rules_merge,
                              coverage_union=coverage_union, coverage_merge=coverage_merge,
                              fine_boundary=self.fine_boundary, m=m,
@@ -395,11 +411,6 @@ class GLocalX:
 
             # Iteration update
             iteration += 1
-
-            # Thin out the evaluator by removing the references to non-existing rules and theories
-            logger.debug(self.name + ' Forgetting ')
-            self.evaluator = self.evaluator.forget(merge_difference, A=A, B=B) if merged\
-                             else self.evaluator.forget(merge_difference)
 
         # Final rule dump
         logger.debug(self.name + ' Dumping ')
@@ -417,12 +428,12 @@ class GLocalX:
         Return the fine boundary of this instance, filtered by `alpha`.
         Args:
             alpha (Union(float | int)): Pruning factor, set to None for no pruning. Defaults to 0.5.
-                                        For fidelity pruning use a float in [0, 1]. For percentile
-                                        pruning use a float in [0, 1] and set `percentile` to True.
+                                        For fidelity pruning use a float in [0, 1]. For np.percentile
+                                        pruning use a float in [0, 1] and set `np.percentile` to True.
                                         For a number of rules, use a positive int.
-            data (ndarray): Data (labels included).
+            data (np.array): Data (labels included).
             evaluator (Evaluator): Evaluator to use to prune, if any. None otherwise. Defaults to None.
-            is_percentile (bool): Whether alpha is a percentile or a fidelity value.
+            is_percentile (bool): Whether alpha is a np.percentile or a fidelity value.
         Returns:
             list: Fine boundary after a fit.
         """
@@ -436,21 +447,23 @@ class GLocalX:
         if data is None:
             return fine_boundary
         elif alpha is not None and len(fine_boundary) > 0:
-            x, y = data[:, :-1], data[:, -1]
+            x, y = data[:, :-1], data[:, -1].astype(int)
             default = int(y.mean().round())
             rules_0 = [r for r in fine_boundary if r.consequence == 0]
             rules_1 = [r for r in fine_boundary if r.consequence == 1]
             fidelities_0 = [evaluator_.binary_fidelity(rule, x, y, default=default) for rule in rules_0]
             fidelities_1 = [evaluator_.binary_fidelity(rule, x, y, default=default) for rule in rules_1]
             if isinstance(alpha, float):
-                lower_bound_0 = percentile(list(set(fidelities_0)), alpha) if is_percentile else alpha
-                lower_bound_1 = percentile(list(set(fidelities_1)), alpha) if is_percentile else alpha
+                lower_bound_0 = np.percentile(list(set(fidelities_0)), alpha) if is_percentile else alpha
+                lower_bound_1 = np.percentile(list(set(fidelities_1)), alpha) if is_percentile else alpha
 
                 fine_boundary_0 = [rule for rule, fidelity in zip(rules_0, fidelities_0) if fidelity >= lower_bound_0]
                 fine_boundary_1 = [rule for rule, fidelity in zip(rules_1, fidelities_1) if fidelity >= lower_bound_1]
             else:
                 fine_boundary_0 = sorted(zip(rules_0, fidelities_0), key=lambda el: el[1])[-alpha // 2:]
                 fine_boundary_1 = sorted(zip(rules_0, fidelities_1), key=lambda el: el[1])[-alpha // 2:]
+                fine_boundary_0 = [rule for rule, _ in fine_boundary_0]
+                fine_boundary_1 = [rule for rule, _ in fine_boundary_1]
 
             return fine_boundary_0 + fine_boundary_1
 

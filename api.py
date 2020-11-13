@@ -14,9 +14,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import click
 import logzero
-from numpy import genfromtxt, hstack, float as np_float
-from numpy.random import choice
-from tensorflow.keras.models import load_model
+import numpy as np
+from tensorflow.keras.models import load_model as load_tf_model
 
 from logzero import logger
 
@@ -136,34 +135,34 @@ def run(rules, tr, oracle=None, generate=None,
 
     logger.info('Loading data... ')
     # Load data and header
-    data = genfromtxt(tr, delimiter=',', names=True)
+    data = np.genfromtxt(tr, delimiter=',', names=True)
     names = data.dtype.names
-    tr_set = data.view(np_float).reshape(data.shape + (-1,))
+    tr_set = data.view(np.float).reshape(data.shape + (-1,))
 
     # Run GLocalX
     logger.info('Loading ruleset...')
     rules = Rule.from_json(rules, names=names)
     rules = list(set(rules))
-    rules = [r for r in rules if len(r) > 0][:10]
+    rules = [r for r in rules if len(r) > 0]
 
     if undersample < 1:
         n = len(rules)
         sample_indices_space = range(n)
         sample_size = int(undersample * n)
-        sample_indices = choice(sample_indices_space, (sample_size,))
+        sample_indices = np.random.choice(sample_indices_space, (sample_size,))
         rules = [rules[i] for i in sample_indices]
 
     logger.info('Loading oracle...')
     if oracle is not None:
         if oracle.endswith('.h5'):
-            oracle = load_model(oracle)
+            oracle = load_tf_model(oracle)
         elif oracle.endswith('.pickle'):
             with open(oracle, 'rb') as log:
                 oracle = pickle.load(log)
         else:
             return
         oracle_predictions = oracle.predict(tr_set[1:, :-1]).round().reshape((tr_set.shape[0] - 1, 1))
-        tr_set = hstack((tr_set[1:, :-1], oracle_predictions))
+        tr_set = np.hstack((tr_set[1:, :-1], oracle_predictions))
 
     # Generate data for GLocalX, if needed
     if generate is not None:
@@ -201,8 +200,7 @@ def run(rules, tr, oracle=None, generate=None,
 
     jsonized_rules = [rule.json() for rule in output_rules]
     with open(name + '.rules.glocalx.alpha=' + str(alpha) + 'json', 'w') as log:
-        output_dic['rules'] = jsonized_rules
-        json.dump(output_dic, log)
+        json.dump(jsonized_rules, log)
 
 
 if __name__ == '__main__':

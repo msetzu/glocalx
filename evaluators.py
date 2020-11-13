@@ -6,10 +6,12 @@ and MemEvaluator, which stores previously computed measures to speed-up performa
 from abc import abstractmethod
 from statistics import harmonic_mean
 
-from numpy import logical_and, argwhere, array, argsort, mean, std, full, vectorize, flip, nan
+import numpy as np
 from scipy.spatial.distance import hamming
 
 from logzero import logger
+
+from models import Rule
 
 
 def covers(rule, x):
@@ -17,27 +19,28 @@ def covers(rule, x):
 
     Args:
         rule (Rule): The rule.
-        x (numpy.array): The record.
+        x (numpy.np.array): The record.
     Returns:
         bool: True if this rule covers c, False otherwise.
     """
     return all([(x[feature] >= lower) & (x[feature] < upper)] for feature, (lower, upper) in rule)
 
 
-def binary_fidelity(unit, x, y, evaluator=None, ids=None, default=nan):
+def binary_fidelity(unit, x, y, evaluator=None, ids=None, default=np.nan):
     """Evaluate the goodness of unit.
     Args:
         unit (Unit): The unit to evaluate.
-        x (array): The data.
-        y (array): The labels.
+        x (numpy.array): The data.
+        y (numpy.array): The labels.
         evaluator (Evaluator): Optional evaluator to speed-up computation.
-        ids (array): Unique identifiers to tell each element in @patterns apart.
+        ids (numpy.array): Unique identifiers to tell each element in @patterns apart.
         default (int): Default prediction for records not covered by the unit.
     Returns:
           float: The unit's fidelity_weight
     """
     coverage = evaluator.coverage(unit, x, ids=ids).flatten()
-    unit_predictions = array([unit.consequence for _ in range(x.shape[0] if ids is None else ids.shape[0])]).flatten()
+    unit_predictions = np.array([unit.consequence
+                                 for _ in range(x.shape[0] if ids is None else ids.shape[0])]).flatten()
     unit_predictions[~coverage] = default
 
     fidelity = 1 - hamming(unit_predictions, y[ids] if ids is not None else y) if len(y) > 0 else 0
@@ -50,7 +53,7 @@ def coverage_size(rule, x):
 
     Args:
         rule (Rule): The rule.
-        x (array): The validation set.
+        x (numpy.array): The validation set.
 
     Returns:
         (int: Number of records of X covered by rule.
@@ -62,33 +65,33 @@ def coverage_matrix(rules, patterns, targets=None, ids=None):
     """Compute the coverage of @rules over @patterns.
     Args:
         rules (Union(list, Rule)): List of rules (or single Rule) whose coverage to compute.
-        patterns (array): The validation set.
-        targets (array): The labels, if any. None otherwise. Defaults to None.
-        ids (array): Unique identifiers to tell each element in `x` apart.
+        patterns (numpy.array): The validation set.
+        targets (numpy.array): The labels, if any. None otherwise. Defaults to None.
+        ids (numpy.array): Unique identifiers to tell each element in `x` apart.
     Returns:
-        numpy.ndarray: The coverage matrix.
+        numpy.array: The coverage matrix.
     """
     def premises_from(rule, pure=False):
         if not pure:
-            premises = logical_and.reduce([[(patterns[:, feature] > lower) & (patterns[:, feature] <= upper)]
-                                           for feature, (lower, upper) in rule]).squeeze()
+            premises = np.logical_and.reduce([[(patterns[:, feature] > lower) & (patterns[:, feature] <= upper)]
+                                              for feature, (lower, upper) in rule]).squeeze()
         else:
-            premises = logical_and.reduce([(patterns[:, feature] > lower) & (patterns[:, feature] <= upper)
-                                           & (targets == rule.consequence)
-                                           for feature, (lower, upper) in rule]).squeeze()
+            premises = np.logical_and.reduce([(patterns[:, feature] > lower) & (patterns[:, feature] <= upper)
+                                              & (targets == rule.consequence)
+                                              for feature, (lower, upper) in rule]).squeeze()
 
-        premises = argwhere(premises).squeeze()
+        premises = np.argwhere(premises).squeeze()
 
         return premises
 
     if isinstance(rules, list):
-        coverage_matrix_ = full((len(rules), len(patterns)), False)
+        coverage_matrix_ = np.full((len(rules), len(patterns)), False)
         hit_columns = [premises_from(rule, targets is not None) for rule in rules]
 
         for k, hits in zip(range(len(patterns)), hit_columns):
             coverage_matrix_[k, hits] = True
     else:
-        coverage_matrix_ = full((len(patterns)), False)
+        coverage_matrix_ = np.full((len(patterns)), False)
         hit_columns = [premises_from(rules, targets is not None)]
         coverage_matrix_[hit_columns] = True
 
@@ -105,11 +108,11 @@ class Evaluator:
         """Compute the coverage of @rules over @patterns.
         Args:
             rules (list) or (Rule):
-            patterns (array): The validation set.
-            target (array): The labels, if any. None otherwise. Defaults to None.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
+            patterns (numpy.array): The validation set.
+            target (numpy.array): The labels, if any. None otherwise. Defaults to None.
+            ids (numpy.array): Unique identifiers to tell each element in @patterns apart.
         Returns:
-            numpy.ndarray: The coverage matrix.
+            numpy.array: The coverage matrix.
         """
         pass
 
@@ -119,21 +122,21 @@ class Evaluator:
 
         Args:
             rule (Rule): The rule.
-            x (array): The validation set.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
+            x (numpy.array): The validation set.
+            ids (numpy.array): Unique identifiers to tell each element in @patterns apart.
         Returns:
             int: Number of records of X covered by rule.
         """
         pass
 
     @abstractmethod
-    def binary_fidelity(self, unit, x, y, ids=None, default=nan):
+    def binary_fidelity(self, unit, x, y, ids=None, default=np.nan):
         """Evaluate the goodness of unit.
         Args:
             unit (Unit): The unit to evaluate.
-            x (array): The data.
-            y (array): The labels.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
+            x (numpy.array): The data.
+            y (numpy.array): The labels.
+            ids (numpy.array): Unique identifiers to tell each element in @patterns apart.
             default (int): Default prediction when no rule covers a record.
         Returns:
               float: The unit's fidelity_weight
@@ -145,11 +148,11 @@ class Evaluator:
         """Evaluate the goodness of the `units`.
         Args:
             units (Union(list, set)): The units to evaluate.
-            x (array): The data.
-            y (array): The labels.
+            x (numpy.array): The data.
+            y (numpy.array): The labels.
             k (int): Number of rules to use in the Laplacian prediction schema.
             default (int): Default prediction for records not covered by the unit.
-            ids (array): Unique identifiers to tell each element in @c apart.
+            ids (numpy.array): Unique identifiers to tell each element in @c apart.
         Returns:
             float: The units fidelity_weight.
         """
@@ -161,7 +164,7 @@ class Evaluator:
 
         Args:
             rule (Rule): The rule.
-            x (array): The record.
+            x (numpy.array): The record.
         Returns:
             bool: True if this rule covers c, False otherwise.
         """
@@ -173,7 +176,7 @@ class Evaluator:
         Compute the Bayesian Information Criterion for the given `rules` set.
         Args:
             rules (set): Ruleset.
-            vl (numpy.ndarray): Validation set.
+            vl (numpy.array): Validation set.
             fidelity_weight (float): Weight to fidelity_weight (BIC-wise).
             complexity_weight (float): Weight to complexity_weight (BIC-wise).
         Returns:
@@ -190,7 +193,7 @@ class DummyEvaluator(Evaluator):
         Compute the Bayesian Information Criterion for the given `rules` set.
         Args:
             rules (set): Ruleset.
-            vl (numpy.ndarray): Validation set.
+            vl (numpy.array): Validation set.
             fidelity_weight (float): Weight to fidelity_weight (BIC-wise).
             complexity_weight (float): Weight to complexity_weight (BIC-wise).
         Returns:
@@ -200,7 +203,7 @@ class DummyEvaluator(Evaluator):
         n = x.shape[0]
         default = round(y.mean() + .5)
         log_likelihood = [binary_fidelity(rule, x, y, default=default, ids=None) for rule in rules]
-        log_likelihood = mean(log_likelihood)
+        log_likelihood = np.mean(log_likelihood)
 
         model_complexity = len(rules)
         model_bic = - (fidelity_weight * log_likelihood - complexity_weight * model_complexity / n)
@@ -215,11 +218,11 @@ class DummyEvaluator(Evaluator):
         self.coverage_sizes = dict()
 
     def covers(self, rule, x):
-        """Does @rule cover c?
+        """Does `rule` cover `x`?
 
         Args:
             rule (Rule): The rule.
-            x (array): The record.
+            x (numpy.array): The record.
         Returns:
             bool: True if this rule covers c, False otherwise.
         """
@@ -229,11 +232,11 @@ class DummyEvaluator(Evaluator):
         """Compute the coverage of @rules over @patterns.
         Args:
             rules (Union(Rule, list): Rule (or list of rules) whose coverage to compute.
-            patterns (array): The validation set.
-            target (array): The labels, if any. None otherwise. Defaults to None.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
+            patterns (numpy.array): The validation set.
+            target (numpy.array): The labels, if any. None otherwise. Defaults to None.
+            ids (numpy.array): Unique identifiers to tell each element in @patterns apart.
         Returns:
-            numpy.ndarray: The coverage matrix.
+            numpy.array: The coverage matrix.
         """
         rules_ = rules if isinstance(rules, list) else [rules]
         coverage_ = coverage_matrix(rules_, patterns, target, ids=ids)
@@ -245,20 +248,20 @@ class DummyEvaluator(Evaluator):
 
         Args:
             rule (Rule): The rule.
-            x (array): The validation set.
-            ids (array): Unique identifiers to tell each element in `x` apart.
+            x (numpy.array): The validation set.
+            ids (numpy.array): Unique identifiers to tell each element in `x` apart.
         Returns:
-            numpy.ndarray: Number of records of X covered by rule.
+            numpy.array: Number of records of X covered by rule.
         """
         return coverage_size(rule, x)
 
-    def binary_fidelity(self, unit, x, y, default=nan, ids=None):
+    def binary_fidelity(self, unit, x, y, default=np.nan, ids=None):
         """Evaluate the goodness of unit.
         Args:
             unit (Unit): The unit to evaluate.
-            x (array): The data.
-            y (array): The labels.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
+            x (numpy.array): The data.
+            y (numpy.array): The labels.
+            ids (numpy.array): Unique identifiers to tell each element in @patterns apart.
             default (int): Default prediction when no rule covers a record.
         Returns:
               (float): The unit's fidelity_weight
@@ -272,25 +275,25 @@ class DummyEvaluator(Evaluator):
         """Evaluate the goodness of unit.
         Args:
             units (Union(list, set): The units to evaluate.
-            x (array): The data.
-            y (array): The labels.
+            x (numpy.array): The data.
+            y (numpy.array): The labels.
             k (int): Number of rules to use in the Laplacian prediction schema.
             default (int): Default prediction for records not covered by the unit.
-            ids (array): Unique identifiers to tell each element in @patterns apart.
+            ids (numpy.array): Unique identifiers to tell each element in @patterns apart.
         Returns:
-              numpy.ndarray: The units fidelity_weight.
+              numpy.array: The units fidelity_weight.
         """
         if self.oracle is not None:
-            y = vectorize(lambda c: 1 if c >= .5 else 0)(self.oracle.predict(x).round().squeeze())
+            y = (self.oracle.predict(x).round().squeeze())
 
-        scores = array([self.binary_fidelity(rule, x, y, default=default) for rule in units])
+        scores = np.array([self.binary_fidelity(rule, x, y, default=default) for rule in units])
         coverage = self.coverage(units, x, y)
 
         predictions = []
         for record in range(len(x)):
             companions = scores[coverage[:, record]]
             companion_units = units[coverage[:, record]]
-            top_companions = argsort(companions)[-k:]
+            top_companions = np.argsort(companions)[-k:]
             top_units = companion_units[top_companions]
             top_fidelities = companions[top_companions]
             top_fidelities_0 = [top_fidelity for top_fidelity, top_unit in zip(top_fidelities, top_units)
@@ -305,10 +308,10 @@ class DummyEvaluator(Evaluator):
             elif len(top_fidelities_1) == 0 and len(top_fidelities_0) == 0:
                 prediction = default
             else:
-                prediction = 0 if mean(top_fidelities_0) > mean(top_fidelities_1) else 1
+                prediction = 0 if np.mean(top_fidelities_0) > np.mean(top_fidelities_1) else 1
 
             predictions.append(prediction)
-        predictions = array(predictions)
+        predictions = np.array(predictions)
         fidelity = 1 - hamming(predictions, y) if len(y) > 0 else 0
 
         return fidelity
@@ -335,7 +338,7 @@ class MemEvaluator(Evaluator):
 
         Args:
             rule (Rule): The rule.
-            x (array): The record.
+            x (numpy.array): The record.
         Returns:
             bool: True if this rule covers c, False otherwise.
         """
@@ -345,11 +348,11 @@ class MemEvaluator(Evaluator):
         """Compute the coverage of @rules over @patterns.
         Args:
             rules (Union(Rule, list): Rule (or list of rules) whose coverage to compute.
-            patterns (array): The validation set.
-            targets (array): The labels, if any. None otherwise. Defaults to None.
-            ids (array): IDS of the given `patterns`, used to speed up evaluation.
+            patterns (numpy.array): The validation set.
+            targets (numpy.array): The labels, if any. None otherwise. Defaults to None.
+            ids (numpy.array): IDS of the given `patterns`, used to speed up evaluation.
         Returns:
-            numpy.ndarray: The coverage matrix.
+            numpy.array: The coverage matrix.
         """
         rules_ = [rules] if not isinstance(rules, list) and not isinstance(rules, set) else rules
 
@@ -357,12 +360,12 @@ class MemEvaluator(Evaluator):
             for rule in rules_:
                 if rule not in self.coverages:
                     self.coverages[rule] = coverage_matrix(rule, patterns, targets)
-            cov = array([self.coverages[rule] for rule in rules_])
+            cov = np.array([self.coverages[rule] for rule in rules_])
         else:
             for rule in rules_:
                 if rule not in self.perfect_coverages:
                     self.perfect_coverages[rule] = coverage_matrix(rule, patterns, targets)
-            cov = array([self.perfect_coverages[rule] for rule in rules_])
+            cov = np.array([self.perfect_coverages[rule] for rule in rules_])
 
         cov = cov[:, ids] if ids is not None else cov
 
@@ -370,12 +373,12 @@ class MemEvaluator(Evaluator):
 
     def distance(self, A, B, x, ids=None):
         """
-        Compute the distance between ruleset `A_` and ruleset `B_`.
+        Compute the distance between ruleset `A` and ruleset `B`.
         Args:
             A (iterable): Ruleset.
             B (iterable): Ruleset.
-            x (numpy.ndarray): Data.
-            ids (array): IDS of the given `x`, used to speed up evaluation.
+            x (numpy.array): Data.
+            ids (numpy.array): IDS of the given `x`, used to speed up evaluation.
         Returns:
             (float): The Jaccard distance between the two.
         """
@@ -401,16 +404,16 @@ class MemEvaluator(Evaluator):
         if tuple(B) not in self.distances:
             self.distances[tuple(B)] = {tuple(A): diff}
 
-        return diff, False
+        return diff
 
-    def binary_fidelity(self, unit, x, y, default=nan, ids=None):
+    def binary_fidelity(self, unit, x, y, default=np.nan, ids=None):
         """Evaluate the goodness of unit.
         Args:
             unit (Unit): The unit to evaluate.
-            x (array): The data.
-            y (array): The labels.
+            x (numpy.array): The data.
+            y (numpy.array): The labels.
             default (int): Default prediction for records not covered by the unit.
-            ids (array): IDS of the given `x`, used to speed up evaluation.
+            ids (numpy.array): IDS of the given `x`, used to speed up evaluation.
         Returns:
               float: The unit's fidelity_weight
         """
@@ -430,24 +433,24 @@ class MemEvaluator(Evaluator):
         """Evaluate the goodness of the `units`.
         Args:
             units (Union(list, set)): The units to evaluate.
-            x (array): The data.
-            y (array): The labels.
+            x (numpy.array): The data.
+            y (numpy.array): The labels.
             k (int): Number of rules to use in the Laplacian prediction schema.
             default (int): Default prediction for records not covered by the unit.
-            ids (array): Unique identifiers to tell each element in @c apart.
+            ids (numpy.array): Unique identifiers to tell each element in @c apart.
         Returns:
               float: The units fidelity_weight.
         """
         if y is None:
             y = self.oracle.predict(x).squeeze().round()
 
-        scores = array([self.binary_fidelity(rule, x, y, default=default) for rule in units])
+        scores = np.array([self.binary_fidelity(rule, x, y, default=default) for rule in units])
         coverage = self.coverage(units, x)
 
         if len(units) == 0:
             predictions = [default] * y.shape[0]
         else:
-            rules_consequences = array([r.consequence for r in units])
+            rules_consequences = np.array([r.consequence for r in units])
             # Fast computation for k = 1
             if k == 1:
                 weighted_coverage_scores = coverage * scores.reshape(-1, 1)  # Coverage matrix weighted by score
@@ -460,7 +463,7 @@ class MemEvaluator(Evaluator):
             else:
                 predictions = []
                 for record in range(len(x)):
-                    record_coverage = argwhere(coverage[:, record]).ravel()
+                    record_coverage = np.argwhere(coverage[:, record]).ravel()
                     if len(record_coverage) == 0:
                         prediction = default
                     else:
@@ -468,10 +471,10 @@ class MemEvaluator(Evaluator):
                         companions_1 = record_coverage[rules_consequences[record_coverage] == 1]
                         scores_0 = scores[companions_0]
                         scores_1 = scores[companions_1]
-                        argsort_scores_0 = flip(argsort(scores[companions_0])[-k:])
-                        argsort_scores_1 = flip(argsort(scores[companions_1])[-k:])
-                        top_scores_0 = scores_0[argsort_scores_0]
-                        top_scores_1 = scores_1[argsort_scores_1]
+                        np.argsort_scores_0 = np.flip(np.argsort(scores[companions_0])[-k:])
+                        np.argsort_scores_1 = np.flip(np.argsort(scores[companions_1])[-k:])
+                        top_scores_0 = scores_0[np.argsort_scores_0]
+                        top_scores_1 = scores_1[np.argsort_scores_1]
 
                         if len(top_scores_0) == 0 and len(top_scores_1) > 0:
                             prediction = 1
@@ -480,10 +483,10 @@ class MemEvaluator(Evaluator):
                         elif len(top_scores_1) == 0 and len(top_scores_0) == 0:
                             prediction = default
                         else:
-                            prediction = 0 if mean(top_scores_0) > mean(top_scores_1) else 1
+                            prediction = 0 if np.mean(top_scores_0) > np.mean(top_scores_1) else 1
 
                     predictions.append(prediction)
-                predictions = array(predictions)
+                predictions = np.array(predictions)
         fidelity = 1 - hamming(predictions, y) if len(y) > 0 else 0
 
         return fidelity
@@ -493,12 +496,11 @@ class MemEvaluator(Evaluator):
         Compute the Bayesian Information Criterion for the given `rules` set.
         Args:
             rules (set): Ruleset.
-            vl (numpy.ndarray): Validation set.
+            vl (numpy.array): Validation set.
             fidelity_weight (float): Weight to fidelity_weight (BIC-wise).
             complexity_weight (float): Weight to complexity_weight (BIC-wise).
         Returns:
-            tuple: Triple (BIC, log likelihood, complexity_weight) if `full` is True,
-                    just the BIC otherwise.
+            float: Model BIC 
         """
         if tuple(rules) in self.bics:
             model_bic = self.bics[tuple(rules)]
@@ -508,7 +510,7 @@ class MemEvaluator(Evaluator):
             default = int(y.mean().round())
             log_likelihood = self.binary_fidelity_model(rules, x, y, default=default)
 
-            model_complexity = mean([len(r) / m for r in rules])
+            model_complexity = np.mean([len(r) / m for r in rules])
             model_bic = - (fidelity_weight * log_likelihood - complexity_weight * model_complexity / n)
 
             logger.debug('Log likelihood: ' + str(log_likelihood) + ' | Complexity: ' + str(model_complexity))
@@ -563,7 +565,7 @@ def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False)
     Arguments:
         glocalx (Union(GLocalX, list)): GLocalX object or list of rules.
         oracle (Predictor): Oracle to validate against.
-        vl (numpy.ndarray): Validation set.
+        vl (numpy.array): Validation set.
         m (int): Initial number of rules.
         alpha (Union(float, int, iterable)): Pruning hyperparameter, rules with score
                                             less than `alpha` are removed from the ruleset
@@ -612,31 +614,29 @@ def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False)
         else:
             if oracle is None:
                 evaluator = MemEvaluator(oracle=None)
-            rules = glocalx.rules(alpha=alpha, x=x, y=y, evaluator=evaluator, is_percentile=is_percentile)
-        rules = [r for r in rules if len(r) > 0]
+            rules = glocalx.rules(alpha=alpha, data=np.hstack((x, y.reshape(-1, 1))),
+                                  evaluator=evaluator, is_percentile=is_percentile)
+        rules = [r for r in rules if len(r) > 0 and isinstance(r, Rule)]
         for r in rules:
             r.names = names
 
         if len(rules) == 0:
             results[alpha] = {
                 'alpha': alpha,
-                'fidelity': nan,
-                'fidelity_weight': nan,
-                'coverage': nan,
-                'mean_length': nan,
-                'std_length': nan,
-                'rule_reduction': nan,
-                'len_reduction': nan,
-                'mean_prediction': nan,
-                'std_prediction': nan,
-                'simplicity': nan,
-                'escore': nan,
+                'fidelity': np.nan,
+                'fidelity_weight': np.nan,
+                'coverage': np.nan,
+                'mean_length': np.nan,
+                'std_length': np.nan,
+                'rule_reduction': np.nan,
+                'len_reduction': np.nan,
+                'mean_prediction': np.nan,
+                'std_prediction': np.nan,
+                'simplicity': np.nan,
+                'escore': np.nan,
                 'size': 0
             }
             continue
-
-        for r in rules:
-            r.names = names
 
         evaluator = MemEvaluator(oracle=oracle)
         validation = dict()
@@ -644,14 +644,14 @@ def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False)
         validation['size'] = len(rules)
         validation['fidelity'] = evaluator.binary_fidelity_model(rules, x=x, y=y, default=majority_label, k=1)
         validation['coverage'] = coverage_pct(rules, x)
-        validation['mean_length'] = mean([len(r) for r in rules])
-        validation['std_length'] = std([len(r) for r in rules])
+        validation['mean_length'] = np.mean([len(r) for r in rules])
+        validation['std_length'] = np.std([len(r) for r in rules])
         validation['rule_reduction'] = len(rules) / m
         validation['len_reduction'] = len_reduction(validation['mean_length'], m)
 
         # Predictions
-        validation['mean_prediction'] = mean([r.consequence for r in rules])
-        validation['std_prediction'] = std([r.consequence for r in rules])
+        validation['mean_prediction'] = np.mean([r.consequence for r in rules])
+        validation['std_prediction'] = np.std([r.consequence for r in rules])
         validation['simplicity'] = simplicity(validation['rule_reduction'], validation['len_reduction'])
         validation['escore'] = harmonic_mean([validation['fidelity'], validation['simplicity']])
 

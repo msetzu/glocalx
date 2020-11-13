@@ -119,10 +119,7 @@ def __final_rule_dump_callback(glocalx, **kwargs):
         **kwargs(Keyword arguments). Entries should be:
             winner_counts (dict): Winner counts dictionary.
     """
-    if kwargs['merged']:
-        return
-
-    rules = [r.json() for r in glocalx.rules(data=None)]
+    rules = [r.json() for r in glocalx.rules()]
 
     with open(glocalx.name + '.rules.glocalx.alpha=None.json', 'w') as log:
         json.dump(rules, log)

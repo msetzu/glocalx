@@ -350,7 +350,7 @@ class GLocalX:
             logger.debug(self.name + '|  sorting candidates queue')
             candidates = sorted(distances, key=lambda c: c[2])
             # No available candidates, distances go from 0 to 1
-            if len(candidates) == 0 or candidates[0][-1][0] == 1:
+            if len(candidates) == 0 or candidates[0][-1] == 1:
                 break
 
             # Sample a data batch

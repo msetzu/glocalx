@@ -107,12 +107,16 @@ Options:
 
 A minimal run simply requires a set of local input rules, a training set and (optionally) a black box:
 
-```bash
-python3.8 apy.py my_rules.json training_set.csv my_black_box.h5 \
-		--name my_black_box_explanations
+```shell script
+python3.8 apy.py data/dummy/dummy_rules.json data/dummy/dummy_dataset.csv --oracle data/dummy/dummy_model.h5 --name dummy --batch 2
 ```
 
 If you are interested, the folder `data/dummy/` contains a dummy example.
+You can run it with
+```shell script
+python3.8 apy.py my_rules.json training_set.csv --oracle my_black_box.h5 \
+		--name my_black_box_explanations
+```
 
 The remaining hyperparameters are optional:
 

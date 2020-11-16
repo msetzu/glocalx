@@ -384,10 +384,10 @@ class MemEvaluator(Evaluator):
         """
         if tuple(A) in self.distances and tuple(B) in self.distances[tuple(A)]:
             diff = self.distances[tuple(A)][tuple(B)]
-            return diff, True
+            return diff
         if tuple(B) in self.distances and tuple(A) in self.distances[tuple(B)]:
             diff = self.distances[tuple(B)][tuple(A)]
-            return diff, True
+            return diff
 
         # New distance to compute
         coverage_A, coverage_B = self.coverage(A, x, ids=ids).sum(axis=0), self.coverage(B, x, ids=ids).sum(axis=0)

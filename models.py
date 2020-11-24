@@ -80,7 +80,7 @@ class Vector(Unit):
 class Rule(Unit):
     """A_ logical rule in conjunctive form."""
 
-    def __init__(self, premises=None, consequence=None, distance=euclidean, names=None):
+    def __init__(self, premises=None, consequence=None, names=None):
         """
         Default rule with the given premises and consequence.
 
@@ -88,15 +88,12 @@ class Rule(Unit):
             premises (dict): Dictionary {feature -> premise} holding the premise for @feature. Defaults to the empty
                                 dictionary.
             consequence (int): Outcome of the rule. Defaults to None.
-            distance (function): Function Rule x Record -> float to evaluate the centrality of a record
-                                w.r.t. the rule. Defaults to Euclidean distance.
             names (list): Names of categorical variables. Set of sets, each set is a group of features on the same
             variable.
         """
         self.features = set(premises.keys())
         self.premises = premises if premises is not None else dict()
         self.consequence = consequence
-        self.distance = distance
         self.names = names
 
     @classmethod
@@ -205,12 +202,12 @@ class Rule(Unit):
         return self
 
     def __copy__(self):
-        cop_rule = Rule(self.premises, self.consequence)
+        cop_rule = Rule(self.premises, self.consequence, names=self.names)
 
         return cop_rule
 
     def __deepcopy__(self, memodict=None):
-        cop_rule = Rule(deepcopy(self.premises), deepcopy(self.consequence))
+        cop_rule = Rule(deepcopy(self.premises), deepcopy(self.consequence), names=deepcopy(self.names))
 
         return cop_rule
 
@@ -287,7 +284,7 @@ class Rule(Unit):
         if self.consequence != other.consequence:
             raise ValueError('Rules should have the same consequence')
 
-        sum_rule = Rule({}, self.consequence)
+        sum_rule = Rule({}, self.consequence, names=self.names)
         premises_in_common = {feature for feature in self.premises if feature in other.premises}
         premises_exclusive = {feature for feature in self.premises if feature not in other.premises}
 
@@ -329,7 +326,7 @@ class Rule(Unit):
             elif other_a < self_a <= self_b <= other_b:
                 negated_premises[f] = None
 
-        new_rules = [Rule(premises={}, consequence=other.consequence)
+        new_rules = [Rule(premises={}, consequence=other.consequence, names=self.names)
                      for _ in range(additional_rules_nr + 1)]
 
         # Preserve features in the weak rule, but not in the strong

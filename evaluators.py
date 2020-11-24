@@ -4,7 +4,6 @@ Two evaluators are provided, DummyEvaluator, which does not optimize performance
 and MemEvaluator, which stores previously computed measures to speed-up performance.
 """
 from abc import abstractmethod
-from statistics import harmonic_mean
 
 import numpy as np
 from scipy.spatial.distance import hamming
@@ -384,10 +383,10 @@ class MemEvaluator(Evaluator):
         """
         if tuple(A) in self.distances and tuple(B) in self.distances[tuple(A)]:
             diff = self.distances[tuple(A)][tuple(B)]
-            return diff, True
+            return diff
         if tuple(B) in self.distances and tuple(A) in self.distances[tuple(B)]:
             diff = self.distances[tuple(B)][tuple(A)]
-            return diff, True
+            return diff
 
         # New distance to compute
         coverage_A, coverage_B = self.coverage(A, x, ids=ids).sum(axis=0), self.coverage(B, x, ids=ids).sum(axis=0)
@@ -560,13 +559,13 @@ class MemEvaluator(Evaluator):
 ########################
 # Framework validation #
 ########################
-def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False):
+def validate(glocalx, oracle, vl, m=None, alpha=0.5, is_percentile=False):
     """Validate the given `glocalx` instance on the given `tr` dataset.
     Arguments:
         glocalx (Union(GLocalX, list)): GLocalX object or list of rules.
         oracle (Predictor): Oracle to validate against.
         vl (numpy.array): Validation set.
-        m (int): Initial number of rules.
+        m (int): Initial number of rules, if known, None otherwise. Defaults to None.
         alpha (Union(float, int, iterable)): Pruning hyperparameter, rules with score
                                             less than `alpha` are removed from the ruleset
                                             used to perform the validation. The score can be
@@ -576,15 +575,11 @@ def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False)
                                             Same applies if an iterable is provided.
                                             Defaults to '0.5'.
         is_percentile (bool): Whether the provided `alpha` is a percentile or not. Defaults to False.
-        names (set): Groups of variables.
     Returns:
         dict: Dictionary of validation measures.
     """
     def len_reduction(ruleset_a, ruleset_b):
         return ruleset_a / ruleset_b
-
-    def simplicity(ruleset_a, ruleset_b):
-        return ruleset_a * ruleset_b
 
     def coverage_pct(rules, x):
         coverage = coverage_matrix(rules, x)
@@ -617,8 +612,6 @@ def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False)
             rules = glocalx.rules(alpha=alpha, data=np.hstack((x, y.reshape(-1, 1))),
                                   evaluator=evaluator, is_percentile=is_percentile)
         rules = [r for r in rules if len(r) > 0 and isinstance(r, Rule)]
-        for r in rules:
-            r.names = names
 
         if len(rules) == 0:
             results[alpha] = {
@@ -632,8 +625,6 @@ def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False)
                 'len_reduction': np.nan,
                 'mean_prediction': np.nan,
                 'std_prediction': np.nan,
-                'simplicity': np.nan,
-                'escore': np.nan,
                 'size': 0
             }
             continue
@@ -646,14 +637,12 @@ def validate(glocalx, oracle, vl, m, alpha=0.5, names=None, is_percentile=False)
         validation['coverage'] = coverage_pct(rules, x)
         validation['mean_length'] = np.mean([len(r) for r in rules])
         validation['std_length'] = np.std([len(r) for r in rules])
-        validation['rule_reduction'] = len(rules) / m
-        validation['len_reduction'] = len_reduction(validation['mean_length'], m)
+        validation['rule_reduction'] = 1 - len(rules) / m if m is not None else np.nan
+        validation['len_reduction'] = len_reduction(validation['mean_length'], m) if m is not None else np.nan
 
         # Predictions
         validation['mean_prediction'] = np.mean([r.consequence for r in rules])
         validation['std_prediction'] = np.std([r.consequence for r in rules])
-        validation['simplicity'] = simplicity(validation['rule_reduction'], validation['len_reduction'])
-        validation['escore'] = harmonic_mean([validation['fidelity'], validation['simplicity']])
 
         results[alpha] = validation
 

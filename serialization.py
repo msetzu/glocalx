@@ -42,10 +42,8 @@ def load_run(run_file):
     rules = dic['rules']
     premises = [{int(k): v for k, v in d.items() if k != 'consequence' and k != 'label'} for d in rules]
     consequences = [dic['consequence'] if 'consequence' in dic else dic['label'] for dic in rules]
-    rules = [Rule(premises=premise, consequence=consequence)
+    rules = [Rule(premises=premise, consequence=consequence, names=names)
              for premise, consequence in zip(premises, consequences)]
-    for r in rules:
-        r.names = names
 
     # Load oracle
     oracle = dic['oracle']
@@ -70,7 +68,7 @@ def load_run(run_file):
     return results
 
 
-def load_glocalx(rules, is_glocalx_run=False, high_concordance=True, strong_cut=True):
+def load_glocalx(rules, is_glocalx_run=False):
     """
     Create a GLocalX instance from `rules_file`. Rules from `rules_file` are considered as
     this instance's output, i.e. its `self.fine_boundary`.
@@ -79,8 +77,6 @@ def load_glocalx(rules, is_glocalx_run=False, high_concordance=True, strong_cut=
         is_glocalx_run (bool): Whether the given rule file is the output of a GLocalX run or not.
                                 GLocalX stores its output file in a different format than the input
                                 rules.
-        high_concordance (bool): Whether to join using only shared features. Defaults to True.
-        strong_cut (bool): Whether to cut using non-shared features too. Defaults to True.
 
     Returns:
         GLocalX: A GLocalX instance as if it were trained and returned `rules`
@@ -92,13 +88,13 @@ def load_glocalx(rules, is_glocalx_run=False, high_concordance=True, strong_cut=
         if is_glocalx_run:
             run = load_run(rules)
             fine_boundary = run['rules']
-            glocalx = GLocalX(oracle=run['oracle'], high_concordance=high_concordance, strong_cut=strong_cut)
+            glocalx = GLocalX(oracle=run['oracle'])
         else:
             fine_boundary = Rule.from_json(rules)
-            glocalx = GLocalX(oracle=None, high_concordance=high_concordance, strong_cut=strong_cut)
+            glocalx = GLocalX(oracle=None)
     elif isinstance(rules, set) or isinstance(rules, list):
         fine_boundary = rules
-        glocalx = GLocalX(oracle=None, high_concordance=high_concordance, strong_cut=strong_cut)
+        glocalx = GLocalX(oracle=None)
     else:
         raise ValueError('Not a str or set or list')
 

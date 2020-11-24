@@ -492,7 +492,7 @@ class GLocalX:
                 fine_boundary_1 = [rule for rule, fidelity in zip(rules_1, fidelities_1) if fidelity >= lower_bound_1]
             elif isinstance(alpha, int):
                 fine_boundary_0 = sorted(zip(rules_0, fidelities_0), key=lambda el: el[1])[-alpha // 2:]
-                fine_boundary_1 = sorted(zip(rules_0, fidelities_1), key=lambda el: el[1])[-alpha // 2:]
+                fine_boundary_1 = sorted(zip(rules_1, fidelities_1), key=lambda el: el[1])[-alpha // 2:]
                 fine_boundary_0 = [rule for rule, _ in fine_boundary_0]
                 fine_boundary_1 = [rule for rule, _ in fine_boundary_1]
             else:

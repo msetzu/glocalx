@@ -46,18 +46,18 @@ from models import Rule
 @click.option('-u', '--undersample', default=1., help='Undersample size, to use a percentage of the rules. '
                                                       'Defaults to 1.0 (No undersample).')
 # Merge options
-@click.option('--high_concordance', is_flag=True, help='Use to use high concordance.')
-@click.option('--strong_cut', is_flag=True, help='Use to use the strong cut.')
+@click.option('--strict_join', is_flag=True, help='Use to use high concordance.')
+@click.option('--strict_cut', is_flag=True, help='Use to use the strong cut.')
 @click.option('--global_direction', is_flag=True, help='Use to use the global search direction.')
 # Set debug class
 @click.option('-d', '--debug', default=20, help='Debug level.')
 def cl_run(rules, tr, generate=None, oracle=None, batch=128, alpha=0.5, undersample=1.0,
            fidelity_weight=1., complexity_weight=1., global_direction=False,
-           intersect='coverage', high_concordance=False, strong_cut=False,
+           intersect='coverage', strict_join=False, strict_cut=False,
            callbacks=0.1, name=None, debug=20):
     run(rules, tr=tr, oracle=oracle, generate=generate,
         intersecting=intersect, batch_size=batch, alpha=alpha, undersample=undersample,
-        concordance=high_concordance, strong_cut=strong_cut, global_direction=global_direction,
+        strict_join=strict_join, strict_cut=strict_cut, global_direction=global_direction,
         fidelity_weight=fidelity_weight, complexity_weight=complexity_weight,
         callbacks_step=callbacks,
         name=name, debug=debug)
@@ -65,7 +65,7 @@ def cl_run(rules, tr, generate=None, oracle=None, batch=128, alpha=0.5, undersam
 
 def run(rules, tr, oracle=None, generate=None,
         intersecting='coverage', batch_size=128, alpha=0.5, undersample=1.,
-        concordance=False, strong_cut=False, global_direction=False,
+        strict_join=False, strict_cut=False, global_direction=False,
         fidelity_weight=1, complexity_weight=1,
         name=None, callbacks_step=0.1, debug=20):
     """Run the GLocalX framework on a set of rules.
@@ -88,8 +88,15 @@ def run(rules, tr, oracle=None, generate=None,
         name (str): Name for the output logs.
         callbacks_step (Union(int, float)): Callback step, either int or float (percentage). Defaults to 0.1.
         debug (int): Minimum debug level.
-        concordance (bool): True to use high concordance, false otherwise. Defaults to False.
-        strong_cut (bool): True for a strong cut, false otherwise. Defaults to False.
+        strict_join (bool): If True, join is less stringent: only features on both rules
+                            are merged, others are removed
+                            If False, join is less stringent: features on both rules are merged.
+                            If a feature is present only in one rule, it will be present as-is
+                            in the resulting join.
+                            Defaults to True.
+        strict_cut (bool): If True, the dominant rule cuts the non-dominant rules on all features.
+                            If False, the dominant rule cuts the non-dominant rules only on shared features.
+                            Defaults to True.
     """
     # Set-up debug
     if debug == 10:
@@ -186,20 +193,21 @@ def run(rules, tr, oracle=None, generate=None,
     n = len(rules)
     actual_callbacks_step = max(callbacks_step if isinstance(callbacks_step, int) else int(n * callbacks_step), n)
     logger.info('Merging...')
-    glocalx = GLocalX(oracle=oracle, intersecting=intersecting, name=name, high_concordance=concordance,
-                      strong_cut=strong_cut)
+    glocalx = GLocalX(oracle=oracle)
     glocalx = glocalx.fit(rules, tr_set,
                           batch_size=batch_size if batch_size > 0 else tr_set.shape[0],
-                          global_direction=global_direction,
+                          intersecting=intersecting, global_direction=global_direction,
+                          strict_join=strict_join, strict_cut=strict_cut,
                           fidelity_weight=fidelity_weight, complexity_weight=complexity_weight,
                           callback_step=actual_callbacks_step,
                           callbacks=[print_cb, full_cb, final_rule_dump_cb])
 
     logger.info('Storing output rules ' + name + '...')
     output_rules = glocalx.rules(alpha, tr_set)
+    glocalx.rules(75, tr_set, is_percentile=True)
 
     jsonized_rules = [rule.json() for rule in output_rules]
-    with open(name + '.rules.glocalx.alpha=' + str(alpha) + 'json', 'w') as log:
+    with open(name + '.rules.glocalx.alpha=' + str(alpha) + '.json', 'w') as log:
         json.dump(jsonized_rules, log)
 
 

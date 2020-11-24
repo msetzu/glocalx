@@ -5,15 +5,19 @@ from glocalx import GLocalX
 
 class ProbabilisticCutGLocalX(GLocalX):
 
-    def _cut(self, conflicting_group, x, y):
+    def _cut(self, conflicting_group, x, y, strict_cut=True):
         """
-        Cut the provided `conflicting_groups`. Each conflicting group is a list of conflicting rules holding a
-        'dominant rule' with dominance over the others. Cut is performed between the dominant rule and every other
+        Cut the provided `conflicting_groups`. Each conflicting group is
+        a list of conflicting rules holding a 'king rule' with dominance
+        over the others. Cut is performed between the king rule and every other
         rule in the group. A non-king rule is cut each time is designed as such.
         Arguments:
             conflicting_group (iterable): Set of conflicting groups.
-            x (ndarray): Data.
-            y (ndarray): Labels.
+            x (np.array): Data.
+            y (np.array): Labels.
+            strict_cut (bool): If True, the dominant rule cuts the non-dominant rules on all features.
+                                If False, the dominant rule cuts the non-dominant rules only on shared features.
+                                Defaults to True.
         Returns:
             List: List of rules with minimized conflict.
         """
@@ -38,7 +42,7 @@ class ProbabilisticCutGLocalX(GLocalX):
         for rule in conflicting_group - {dominant_rule}:
             dominant_features = dominant_rule.features
             cut_rule = rule - dominant_rule
-            if self.strong_cut:
+            if strict_cut:
                 for r in cut_rule:
                     for f in dominant_features - r.features:
                         if f in r.features:

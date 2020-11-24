@@ -43,9 +43,8 @@ os.environ[&#39;TF_CPP_MIN_LOG_LEVEL&#39;] = &#39;3&#39;
 
 import click
 import logzero
-from numpy import genfromtxt, hstack, float as np_float
-from numpy.random import choice
-from tensorflow.keras.models import load_model
+import numpy as np
+from tensorflow.keras.models import load_model as load_tf_model
 
 from logzero import logger
 
@@ -76,18 +75,18 @@ from models import Rule
 @click.option(&#39;-u&#39;, &#39;--undersample&#39;, default=1., help=&#39;Undersample size, to use a percentage of the rules. &#39;
                                                       &#39;Defaults to 1.0 (No undersample).&#39;)
 # Merge options
-@click.option(&#39;--high_concordance&#39;, is_flag=True, help=&#39;Use to use high concordance.&#39;)
-@click.option(&#39;--strong_cut&#39;, is_flag=True, help=&#39;Use to use the strong cut.&#39;)
+@click.option(&#39;--strict_join&#39;, is_flag=True, help=&#39;Use to use high concordance.&#39;)
+@click.option(&#39;--strict_cut&#39;, is_flag=True, help=&#39;Use to use the strong cut.&#39;)
 @click.option(&#39;--global_direction&#39;, is_flag=True, help=&#39;Use to use the global search direction.&#39;)
 # Set debug class
 @click.option(&#39;-d&#39;, &#39;--debug&#39;, default=20, help=&#39;Debug level.&#39;)
 def cl_run(rules, tr, generate=None, oracle=None, batch=128, alpha=0.5, undersample=1.0,
            fidelity_weight=1., complexity_weight=1., global_direction=False,
-           intersect=&#39;coverage&#39;, high_concordance=False, strong_cut=False,
+           intersect=&#39;coverage&#39;, strict_join=False, strict_cut=False,
            callbacks=0.1, name=None, debug=20):
     run(rules, tr=tr, oracle=oracle, generate=generate,
         intersecting=intersect, batch_size=batch, alpha=alpha, undersample=undersample,
-        concordance=high_concordance, strong_cut=strong_cut, global_direction=global_direction,
+        strict_join=strict_join, strict_cut=strict_cut, global_direction=global_direction,
         fidelity_weight=fidelity_weight, complexity_weight=complexity_weight,
         callbacks_step=callbacks,
         name=name, debug=debug)
@@ -95,7 +94,7 @@ def cl_run(rules, tr, generate=None, oracle=None, batch=128, alpha=0.5, undersam
 
 def run(rules, tr, oracle=None, generate=None,
         intersecting=&#39;coverage&#39;, batch_size=128, alpha=0.5, undersample=1.,
-        concordance=False, strong_cut=False, global_direction=False,
+        strict_join=False, strict_cut=False, global_direction=False,
         fidelity_weight=1, complexity_weight=1,
         name=None, callbacks_step=0.1, debug=20):
     &#34;&#34;&#34;Run the GLocalX framework on a set of rules.
@@ -118,8 +117,15 @@ def run(rules, tr, oracle=None, generate=None,
         name (str): Name for the output logs.
         callbacks_step (Union(int, float)): Callback step, either int or float (percentage). Defaults to 0.1.
         debug (int): Minimum debug level.
-        concordance (bool): True to use high concordance, false otherwise. Defaults to False.
-        strong_cut (bool): True for a strong cut, false otherwise. Defaults to False.
+        strict_join (bool): If True, join is less stringent: only features on both rules
+                            are merged, others are removed
+                            If False, join is less stringent: features on both rules are merged.
+                            If a feature is present only in one rule, it will be present as-is
+                            in the resulting join.
+                            Defaults to True.
+        strict_cut (bool): If True, the dominant rule cuts the non-dominant rules on all features.
+                            If False, the dominant rule cuts the non-dominant rules only on shared features.
+                            Defaults to True.
     &#34;&#34;&#34;
     # Set-up debug
     if debug == 10:
@@ -165,34 +171,34 @@ def run(rules, tr, oracle=None, generate=None,
 
     logger.info(&#39;Loading data... &#39;)
     # Load data and header
-    data = genfromtxt(tr, delimiter=&#39;,&#39;, names=True)
+    data = np.genfromtxt(tr, delimiter=&#39;,&#39;, names=True)
     names = data.dtype.names
-    tr_set = data.view(np_float).reshape(data.shape + (-1,))
+    tr_set = data.view(np.float).reshape(data.shape + (-1,))
 
     # Run GLocalX
     logger.info(&#39;Loading ruleset...&#39;)
     rules = Rule.from_json(rules, names=names)
     rules = list(set(rules))
-    rules = [r for r in rules if len(r) &gt; 0][:10]
+    rules = [r for r in rules if len(r) &gt; 0]
 
     if undersample &lt; 1:
         n = len(rules)
         sample_indices_space = range(n)
         sample_size = int(undersample * n)
-        sample_indices = choice(sample_indices_space, (sample_size,))
+        sample_indices = np.random.choice(sample_indices_space, (sample_size,))
         rules = [rules[i] for i in sample_indices]
 
     logger.info(&#39;Loading oracle...&#39;)
     if oracle is not None:
         if oracle.endswith(&#39;.h5&#39;):
-            oracle = load_model(oracle)
+            oracle = load_tf_model(oracle)
         elif oracle.endswith(&#39;.pickle&#39;):
             with open(oracle, &#39;rb&#39;) as log:
                 oracle = pickle.load(log)
         else:
             return
         oracle_predictions = oracle.predict(tr_set[1:, :-1]).round().reshape((tr_set.shape[0] - 1, 1))
-        tr_set = hstack((tr_set[1:, :-1], oracle_predictions))
+        tr_set = np.hstack((tr_set[1:, :-1], oracle_predictions))
 
     # Generate data for GLocalX, if needed
     if generate is not None:
@@ -216,22 +222,22 @@ def run(rules, tr, oracle=None, generate=None,
     n = len(rules)
     actual_callbacks_step = max(callbacks_step if isinstance(callbacks_step, int) else int(n * callbacks_step), n)
     logger.info(&#39;Merging...&#39;)
-    glocalx = GLocalX(oracle=oracle, intersecting=intersecting, name=name, high_concordance=concordance,
-                      strong_cut=strong_cut)
+    glocalx = GLocalX(oracle=oracle)
     glocalx = glocalx.fit(rules, tr_set,
                           batch_size=batch_size if batch_size &gt; 0 else tr_set.shape[0],
-                          global_direction=global_direction,
+                          intersecting=intersecting, global_direction=global_direction,
+                          strict_join=strict_join, strict_cut=strict_cut,
                           fidelity_weight=fidelity_weight, complexity_weight=complexity_weight,
                           callback_step=actual_callbacks_step,
                           callbacks=[print_cb, full_cb, final_rule_dump_cb])
 
     logger.info(&#39;Storing output rules &#39; + name + &#39;...&#39;)
     output_rules = glocalx.rules(alpha, tr_set)
+    glocalx.rules(75, tr_set, is_percentile=True)
 
     jsonized_rules = [rule.json() for rule in output_rules]
-    with open(name + &#39;.rules.glocalx.alpha=&#39; + str(alpha) + &#39;json&#39;, &#39;w&#39;) as log:
-        output_dic[&#39;rules&#39;] = jsonized_rules
-        json.dump(output_dic, log)
+    with open(name + &#39;.rules.glocalx.alpha=&#39; + str(alpha) + &#39;.json&#39;, &#39;w&#39;) as log:
+        json.dump(jsonized_rules, log)
 
 
 if __name__ == &#39;__main__&#39;:
@@ -245,84 +251,8 @@ if __name__ == &#39;__main__&#39;:
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="api.choice"><code class="name flex">
-<span>def <span class="ident">choice</span></span>(<span>a, size=None, replace=True, p=None)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Generates a random sample from a given 1-D array</p>
-<pre><code>    !!! versionadded "Added in version:&amp;ensp;1.7.0"
-</code></pre>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>New code should use the <code><a title="api.choice" href="#api.choice">RandomState.choice()</a></code> method of a <code>default_rng()</code>
-instance instead; see <code>random-quick-start</code>.</p>
-</div>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>a</code></strong> :&ensp;<code>1-D array-like</code> or <code>int</code></dt>
-<dd>If an ndarray, a random sample is generated from its elements.
-If an int, the random sample is generated as if a were np.arange(a)</dd>
-<dt><strong><code>size</code></strong> :&ensp;<code>int</code> or <code>tuple</code> of <code>ints</code>, optional</dt>
-<dd>Output shape.
-If the given shape is, e.g., <code>(m, n, k)</code>, then
-<code>m * n * k</code> samples are drawn.
-Default is None, in which case a
-single value is returned.</dd>
-<dt><strong><code>replace</code></strong> :&ensp;<code>boolean</code>, optional</dt>
-<dd>Whether the sample is with or without replacement</dd>
-<dt><strong><code>p</code></strong> :&ensp;<code>1-D array-like</code>, optional</dt>
-<dd>The probabilities associated with each entry in a.
-If not given the sample assumes a uniform distribution over all
-entries in a.</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><strong><code>samples</code></strong> :&ensp;<code>single item</code> or <code>ndarray</code></dt>
-<dd>The generated random samples</dd>
-</dl>
-<h2 id="raises">Raises</h2>
-<dl>
-<dt><code>ValueError</code></dt>
-<dd>If a is an int and less than zero, if a or p are not 1-dimensional,
-if a is an array-like of size 0, if p is not a vector of
-probabilities, if a and p have different lengths, or if
-replace=False and the sample size is greater than the population
-size</dd>
-</dl>
-<h2 id="see-also">See Also</h2>
-<p><code>randint</code>, <code>shuffle</code>, <code>permutation</code>
-<code>Generator.choice: which should be used in new code</code></p>
-<h2 id="examples">Examples</h2>
-<p>Generate a uniform random sample from np.arange(5) of size 3:</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; np.random.choice(5, 3)
-array([0, 3, 4]) # random
-&gt;&gt;&gt; #This is equivalent to np.random.randint(0,5,3)
-</code></pre>
-<p>Generate a non-uniform random sample from np.arange(5) of size 3:</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; np.random.choice(5, 3, p=[0.1, 0, 0.3, 0.6, 0])
-array([3, 3, 0]) # random
-</code></pre>
-<p>Generate a uniform random sample from np.arange(5) of size 3 without
-replacement:</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; np.random.choice(5, 3, replace=False)
-array([3,1,0]) # random
-&gt;&gt;&gt; #This is equivalent to np.random.permutation(np.arange(5))[:3]
-</code></pre>
-<p>Generate a non-uniform random sample from np.arange(5) of size
-3 without replacement:</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; np.random.choice(5, 3, replace=False, p=[0.1, 0, 0.3, 0.6, 0])
-array([2, 3, 0]) # random
-</code></pre>
-<p>Any of the above can be repeated with an arbitrary array-like
-instead of just integers. For instance:</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; aa_milne_arr = ['pooh', 'rabbit', 'piglet', 'Christopher']
-&gt;&gt;&gt; np.random.choice(aa_milne_arr, 5, p=[0.5, 0.1, 0.1, 0.3])
-array(['pooh', 'pooh', 'pooh', 'Christopher', 'piglet'], # random
-      dtype='&lt;U11')
-</code></pre></div>
-</dd>
 <dt id="api.run"><code class="name flex">
-<span>def <span class="ident">run</span></span>(<span>rules, tr, oracle=None, generate=None, intersecting='coverage', batch_size=128, alpha=0.5, undersample=1.0, concordance=False, strong_cut=False, global_direction=False, fidelity_weight=1, complexity_weight=1, name=None, callbacks_step=0.1, debug=20)</span>
+<span>def <span class="ident">run</span></span>(<span>rules, tr, oracle=None, generate=None, intersecting='coverage', batch_size=128, alpha=0.5, undersample=1.0, strict_join=False, strict_cut=False, global_direction=False, fidelity_weight=1, complexity_weight=1, name=None, callbacks_step=0.1, debug=20)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Run the GLocalX framework on a set of rules.</p>
@@ -345,15 +275,22 @@ undersample (float): Percentage of rules to use, if &lt; 1, irrelevant otherwise
 name (str): Name for the output logs.
 callbacks_step (Union(int, float)): Callback step, either int or float (percentage). Defaults to 0.1.
 debug (int): Minimum debug level.
-concordance (bool): True to use high concordance, false otherwise. Defaults to False.
-strong_cut (bool): True for a strong cut, false otherwise. Defaults to False.</p></div>
+strict_join (bool): If True, join is less stringent: only features on both rules
+are merged, others are removed
+If False, join is less stringent: features on both rules are merged.
+If a feature is present only in one rule, it will be present as-is
+in the resulting join.
+Defaults to True.
+strict_cut (bool): If True, the dominant rule cuts the non-dominant rules on all features.
+If False, the dominant rule cuts the non-dominant rules only on shared features.
+Defaults to True.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def run(rules, tr, oracle=None, generate=None,
         intersecting=&#39;coverage&#39;, batch_size=128, alpha=0.5, undersample=1.,
-        concordance=False, strong_cut=False, global_direction=False,
+        strict_join=False, strict_cut=False, global_direction=False,
         fidelity_weight=1, complexity_weight=1,
         name=None, callbacks_step=0.1, debug=20):
     &#34;&#34;&#34;Run the GLocalX framework on a set of rules.
@@ -376,8 +313,15 @@ strong_cut (bool): True for a strong cut, false otherwise. Defaults to False.</p
         name (str): Name for the output logs.
         callbacks_step (Union(int, float)): Callback step, either int or float (percentage). Defaults to 0.1.
         debug (int): Minimum debug level.
-        concordance (bool): True to use high concordance, false otherwise. Defaults to False.
-        strong_cut (bool): True for a strong cut, false otherwise. Defaults to False.
+        strict_join (bool): If True, join is less stringent: only features on both rules
+                            are merged, others are removed
+                            If False, join is less stringent: features on both rules are merged.
+                            If a feature is present only in one rule, it will be present as-is
+                            in the resulting join.
+                            Defaults to True.
+        strict_cut (bool): If True, the dominant rule cuts the non-dominant rules on all features.
+                            If False, the dominant rule cuts the non-dominant rules only on shared features.
+                            Defaults to True.
     &#34;&#34;&#34;
     # Set-up debug
     if debug == 10:
@@ -423,34 +367,34 @@ strong_cut (bool): True for a strong cut, false otherwise. Defaults to False.</p
 
     logger.info(&#39;Loading data... &#39;)
     # Load data and header
-    data = genfromtxt(tr, delimiter=&#39;,&#39;, names=True)
+    data = np.genfromtxt(tr, delimiter=&#39;,&#39;, names=True)
     names = data.dtype.names
-    tr_set = data.view(np_float).reshape(data.shape + (-1,))
+    tr_set = data.view(np.float).reshape(data.shape + (-1,))
 
     # Run GLocalX
     logger.info(&#39;Loading ruleset...&#39;)
     rules = Rule.from_json(rules, names=names)
     rules = list(set(rules))
-    rules = [r for r in rules if len(r) &gt; 0][:10]
+    rules = [r for r in rules if len(r) &gt; 0]
 
     if undersample &lt; 1:
         n = len(rules)
         sample_indices_space = range(n)
         sample_size = int(undersample * n)
-        sample_indices = choice(sample_indices_space, (sample_size,))
+        sample_indices = np.random.choice(sample_indices_space, (sample_size,))
         rules = [rules[i] for i in sample_indices]
 
     logger.info(&#39;Loading oracle...&#39;)
     if oracle is not None:
         if oracle.endswith(&#39;.h5&#39;):
-            oracle = load_model(oracle)
+            oracle = load_tf_model(oracle)
         elif oracle.endswith(&#39;.pickle&#39;):
             with open(oracle, &#39;rb&#39;) as log:
                 oracle = pickle.load(log)
         else:
             return
         oracle_predictions = oracle.predict(tr_set[1:, :-1]).round().reshape((tr_set.shape[0] - 1, 1))
-        tr_set = hstack((tr_set[1:, :-1], oracle_predictions))
+        tr_set = np.hstack((tr_set[1:, :-1], oracle_predictions))
 
     # Generate data for GLocalX, if needed
     if generate is not None:
@@ -474,22 +418,22 @@ strong_cut (bool): True for a strong cut, false otherwise. Defaults to False.</p
     n = len(rules)
     actual_callbacks_step = max(callbacks_step if isinstance(callbacks_step, int) else int(n * callbacks_step), n)
     logger.info(&#39;Merging...&#39;)
-    glocalx = GLocalX(oracle=oracle, intersecting=intersecting, name=name, high_concordance=concordance,
-                      strong_cut=strong_cut)
+    glocalx = GLocalX(oracle=oracle)
     glocalx = glocalx.fit(rules, tr_set,
                           batch_size=batch_size if batch_size &gt; 0 else tr_set.shape[0],
-                          global_direction=global_direction,
+                          intersecting=intersecting, global_direction=global_direction,
+                          strict_join=strict_join, strict_cut=strict_cut,
                           fidelity_weight=fidelity_weight, complexity_weight=complexity_weight,
                           callback_step=actual_callbacks_step,
                           callbacks=[print_cb, full_cb, final_rule_dump_cb])
 
     logger.info(&#39;Storing output rules &#39; + name + &#39;...&#39;)
     output_rules = glocalx.rules(alpha, tr_set)
+    glocalx.rules(75, tr_set, is_percentile=True)
 
     jsonized_rules = [rule.json() for rule in output_rules]
-    with open(name + &#39;.rules.glocalx.alpha=&#39; + str(alpha) + &#39;json&#39;, &#39;w&#39;) as log:
-        output_dic[&#39;rules&#39;] = jsonized_rules
-        json.dump(output_dic, log)</code></pre>
+    with open(name + &#39;.rules.glocalx.alpha=&#39; + str(alpha) + &#39;.json&#39;, &#39;w&#39;) as log:
+        json.dump(jsonized_rules, log)</code></pre>
 </details>
 </dd>
 </dl>
@@ -505,7 +449,6 @@ strong_cut (bool): True for a strong cut, false otherwise. Defaults to False.</p
 <ul id="index">
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="api.choice" href="#api.choice">choice</a></code></li>
 <li><code><a title="api.run" href="#api.run">run</a></code></li>
 </ul>
 </li>

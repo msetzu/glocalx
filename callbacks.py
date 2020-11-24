@@ -121,7 +121,7 @@ def __final_rule_dump_callback(glocalx, **kwargs):
     """
     rules = [r.json() for r in glocalx.rules()]
 
-    with open(glocalx.name + '.rules.glocalx.alpha=None.json', 'w') as log:
+    with open(kwargs['name'] + '.rules.glocalx.alpha=None.json', 'w') as log:
         json.dump(rules, log)
 
 

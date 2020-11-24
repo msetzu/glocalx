@@ -55,12 +55,18 @@ tr_set = data.view(np_float).reshape(data.shape + (-1,))
 local_explanations = Rule.from_json('data/dummy/dummy_rules.json', names=features_names)
 
 # Create a GLocalX instance for `black_box`
-glocalx = GLocalX(oracle=black_box, name='black_box_explanations')
-# Fit the model
-glocalx = glocalx.fit(local_explanations, tr_set)
+glocalx = GLocalX(oracle=black_box)
+# Fit the model, use batch_size=128 for larger datasets
+glocalx = glocalx.fit(local_explanations, tr_set, batch_size=2, name='black_box_explanations')
 
-# Retrieve global explanations
+# Retrieve global explanations by fidelity
 alpha = 0.5
+global_explanations = glocalx.rules(alpha, tr_set)
+# Retrieve global explanations by fidelity percentile
+alpha = 95
+global_explanations = glocalx.rules(alpha, tr_set, is_percentile=True)
+# Retrieve exactly `alpha` global explanations, `alpha/2` per class
+alpha = 10
 global_explanations = glocalx.rules(alpha, tr_set)
 ```
 
@@ -97,8 +103,8 @@ Options:
   -u, --undersample FLOAT        Undersample size, to use a percentage of the
                                  rules. Defaults to 1.0 (No undersample).
 
-  --high_concordance             Use to use high concordance.
-  --strong_cut                   Use to use the strong cut.
+  --strict_join                  Use to use high concordance.
+  --strict_cut                   Use to use the strong cut.
   --global_direction             Use to use the global search direction.
   -d, --debug INTEGER            Debug level.
   --help                         Show this message and exit.
@@ -130,8 +136,8 @@ The remaining hyperparameters are optional:
 - `--alpha $alpha` Pruning factor. Defaults to 0.5
 - `--batch $batch` Batch size. Set to -1 for full batch. Defaults to 128.
 - `--undersample $pct` Undersample size, to use a percentage of the input rules. Defaults to 1.0 (all rules)
-- `--high_concordance` to use a more stringent `join`
-- `--strong_cut` to use a more stringent `cut`
+- `--strict_join` to use a more stringent `join`
+- `--strict_cut` to use a more stringent `cut`
 - `--global_direction` Use to evaluate merges on the whole validation set
 - `--debug` Debug level: the higher, the less messages shown
 

@@ -51,29 +51,18 @@ class GLocalX:
 
     Attributes:
         oracle (Predictor): The black box to explain
-        intersecting (str): The explanation overlap strategy: either 'coverage' or 'polyhedra'
-        high_concordance (bool): Use stringent join
-        strong_cut (bool): Use stringent cut
-        name (str): Name to use for log and output files
         evaluator (MemEvaluator): Evaluator used to evaluate merges and distances
         fine_boundary (set): Explanation boundary
 
     """
 
     oracle: Predictor
-    intersecting: str
-    high_concordance: bool
-    strong_cut: bool
-    name: str
     evaluator: MemEvaluator
     fine_boundary: set
 
-    def __init__(self, oracle=None, intersecting='coverage', name=None, high_concordance=True, strong_cut=False):
+    def __init__(self, oracle=None):
+        """"""
         self.oracle = oracle
-        self.intersecting = intersecting
-        self.high_concordance = high_concordance
-        self.strong_cut = strong_cut
-        self.name = name
         self.evaluator = MemEvaluator(oracle=self.oracle)
 
     @staticmethod
@@ -90,13 +79,16 @@ class GLocalX:
 
         return idx_train
 
-    def partition(self, A, B, record=None):
+    def partition(self, A, B, record=None, intersecting='coverage'):
         """
         Find the conflicting, non-conflicting and disjoint groups between ruleset `A` and `B`.
         Args:
             A (list): List of rules.
             B (list): List of rules.
             record (int): Id of the record, if not None.
+            intersecting (str): If 'coverage', rules are going to overlap if they cover at least
+                                one record in common.
+                                If 'polyhedra', rules are going to overlap if their premises do.
         Returns:
             tuple: Conflicting groups, non-conflicting groups, disjoint groups.
         """
@@ -118,7 +110,7 @@ class GLocalX:
                 elif (b, a) in self.evaluator.intersecting:
                     a_intersecting_b = self.evaluator.intersecting[(b, a)]
                 elif not ((b, a) in self.evaluator.intersecting or (a, b) in self.evaluator.intersecting):
-                    if self.intersecting == 'coverage':
+                    if intersecting == 'coverage':
                         a_intersecting_b = (np.logical_and(coverage_a, coverage_b)).any()
                     else:
                         a_intersecting_b = a & b
@@ -181,7 +173,7 @@ class GLocalX:
 
         return bic_merge_validation <= bic_union_validation
 
-    def _cut(self, conflicting_group, x, y):
+    def _cut(self, conflicting_group, x, y, strict_cut=True):
         """
         Cut the provided `conflicting_groups`. Each conflicting group is
         a list of conflicting rules holding a 'king rule' with dominance
@@ -191,6 +183,9 @@ class GLocalX:
             conflicting_group (iterable): Set of conflicting groups.
             x (np.array): Data.
             y (np.array): Labels.
+            strict_cut (bool): If True, the dominant rule cuts the non-dominant rules on all features.
+                                If False, the dominant rule cuts the non-dominant rules only on shared features.
+                                Defaults to True.
         Returns:
             List: List of rules with minimized conflict.
         """
@@ -209,7 +204,7 @@ class GLocalX:
         for rule in conflicting_group - {dominant_rule}:
             dominant_features = dominant_rule.features
             cut_rule = rule - dominant_rule
-            if self.strong_cut:
+            if strict_cut:
                 for r in cut_rule:
                     for f in dominant_features - r.features:
                         if f in r.features:
@@ -220,13 +215,19 @@ class GLocalX:
 
         return cut_rules
 
-    def _join(self, rules, x, y):
+    def _join(self, rules, x, y, strict_join=True):
         """
         Join concordant rules.
         Arguments:
             rules (iterable): List of sets of conflicting groups.
             x (np.array): Data.
             y (np.array): Labels.
+            strict_join (bool): If True, join is less stringent: only features on both rules
+                                    are merged, others are removed
+                                    If False, join is less stringent: features on both rules are merged.
+                                    If a feature is present only in one rule, it will be present as-is
+                                    in the resulting join.
+                                    Defaults to True.
         Returns:
             set: List of rules with minimized conflict.
         """
@@ -259,13 +260,13 @@ class GLocalX:
             lower_bound, upper_bound = min([lb for lb, _ in values]), max([ub for _, ub in values])
             premises[f] = (lower_bound, upper_bound)
         # A highly-concordant merge includes non-shared features, hence making the join more stringent
-        if not self.high_concordance:
+        if not strict_join:
             premises.update(non_shared_features)
-        rule = Rule(premises=premises, consequence=consequence)
+        rule = Rule(premises=premises, consequence=consequence, names=rules_list[0].names)
 
         return {rule}
 
-    def merge(self, A, B, x, y, ids=None):
+    def merge(self, A, B, x, y, ids=None, intersecting='coverage', strict_join=True, strict_cut=True):
         """
         Merge the two rulesets.
         Args:
@@ -274,6 +275,18 @@ class GLocalX:
             x (np.array): Data.
             y (np.array): Labels.
             ids (iterable): Ids of the records.
+            intersecting (str): If 'coverage', rules are going to overlap if they cover at least
+                                one record in common.
+                                If 'polyhedra', rules are going to overlap if their premises do.
+            strict_join (bool): If True, join is less stringent: only features on both rules
+                                    are merged, others are removed
+                                    If False, join is less stringent: features on both rules are merged.
+                                    If a feature is present only in one rule, it will be present as-is
+                                    in the resulting join.
+                                    Defaults to True.
+            strict_cut (bool): If True, the dominant rule cuts the non-dominant rules on all features.
+                                If False, the dominant rule cuts the non-dominant rules only on shared features.
+                                Defaults to True.
         Returns:
             set: Set of merged rules.
         """
@@ -283,12 +296,12 @@ class GLocalX:
         # Compute the disjoint group and add it to AB
         _, _, disjoint_group = self.partition(A_, B_, ids)
         for record in ids:
-            conflicting_group, non_conflicting_group, _ = self.partition(A_, B_, record)
+            conflicting_group, non_conflicting_group, _ = self.partition(A_, B_, record, intersecting)
             conflicting_group, non_conflicting_group = conflicting_group[0], non_conflicting_group[0]
             disjoint_group = disjoint_group - conflicting_group - non_conflicting_group
 
-            cut_rules = self._cut(conflicting_group, x, y)
-            joined_rules = self._join(non_conflicting_group, x, y)
+            cut_rules = self._cut(conflicting_group, x, y, strict_cut)
+            joined_rules = self._join(non_conflicting_group, x, y, strict_join)
             AB |= joined_rules
             AB |= cut_rules
 
@@ -296,9 +309,11 @@ class GLocalX:
 
         return AB
 
-    # noinspection PyAttributeOutsideInit,PyAttributeOutsideInit
-    def fit(self, rules, tr_set, batch_size=128, global_direction=False, callbacks=None,
-            fidelity_weight=1., complexity_weight=1., callback_step=5, pickle_this=False):
+    def fit(self, rules, tr_set, batch_size=128, global_direction=False,
+            intersecting='coverage', strict_join=True, strict_cut=True,
+            fidelity_weight=1., complexity_weight=1.,
+            callbacks=None, callback_step=5,
+            name=None, pickle_this=False):
         """
         Train GLocalX on the given `rules`.
         Args:
@@ -308,12 +323,25 @@ class GLocalX:
             global_direction (bool): False to compute the BIC on the data batch,
                                     True to compute it on the whole validation set.
                                     Defaults to False.
+            intersecting (str): If 'coverage', rules are going to overlap if they cover at least
+                                one record in common.
+                                If 'polyhedra', rules are going to overlap if their premises do.
+            strict_join (bool): If True, join is less stringent: only features on both rules
+                                    are merged, others are removed
+                                    If False, join is less stringent: features on both rules are merged.
+                                    If a feature is present only in one rule, it will be present as-is
+                                    in the resulting join.
+                                    Defaults to True.
+            strict_cut (bool): If True, the dominant rule cuts the non-dominant rules on all features.
+                                If False, the dominant rule cuts the non-dominant rules only on shared features.
+                                Defaults to True.
             callbacks (list): List of callbacks to use. Defaults to the empty list.
             fidelity_weight (float): Weight to fidelity_weight (BIC-wise). Defaults to 1 (no weight).
             complexity_weight (float): Weight to complexity_weight (BIC-wise). Defaults to 1 (no weight).
             callback_step (Union(int, float)): Evoke the callbacks every `callback_step` iterations.
                                                 Use float in [0, 1] to use percentage or an integer.
                                                 Defaults to 5.
+            name (str): Name of this run for logging purposes. Defaults to None.
             pickle_this (bool): Whether to dump a pickle for this instance as the training finishes.
                                 Defaults to False.
         Returns:
@@ -321,8 +349,8 @@ class GLocalX:
         """
         x, y = tr_set[:, :-1], tr_set[:, -1]
         if self.oracle is not None:
-            y = self.oracle.predict(tr_set[:, :-1]).round().astype(int)
-            tr_set[:, -1] = y.reshape(1, -1)
+            y = self.oracle.predict(tr_set[:, :-1]).round().astype(int).reshape(1, -1)
+            tr_set[:, -1] = y
 
         m = len(rules)
         default = int(y.mean().round())
@@ -330,53 +358,55 @@ class GLocalX:
         boundary = input_rules
         # The boundary vector holds the current currently available theories
         self.boundary = boundary
-        self.boundary_len = len(self.boundary)
+        boundary_len = len(self.boundary)
         self.fine_boundary = set(rules)
+        full_name = name if name is not None else 'Anonymous run'
 
         # Merge
         iteration = 0
         merged = False
         rejections_list = list()
         while len(self.boundary) > 2 and (merged or iteration == 0):
-            logger.debug(self.name + ' | ************************ Iteration ' + str(iteration) + ' of ' + str(m))
+            logger.debug(full_name + ' | ************************ Iteration ' + str(iteration) + ' of ' + str(m))
             merged = False
 
             # Update distance matrix
-            candidates_indices = [(i, j) for i, j in product(range(self.boundary_len), range(self.boundary_len))
+            candidates_indices = [(i, j) for i, j in product(range(boundary_len), range(boundary_len))
                                   if j > i]
             logger.debug('Computing distances')
             distances = [(i, j, self.evaluator.distance(self.boundary[i], self.boundary[j], x))
                          for i, j in candidates_indices]
-            logger.debug(self.name + '|  sorting candidates queue')
+            logger.debug(full_name + '|  sorting candidates queue')
             candidates = sorted(distances, key=lambda c: c[2])
             # No available candidates, distances go from 0 to 1
             if len(candidates) == 0 or candidates[0][-1] == 1:
                 break
 
             # Sample a data batch
-            batch_ids = GLocalX.batch(y, sample_size=batch_size)
+            batch_ids = GLocalX.batch(y.squeeze(), sample_size=batch_size)
             # Explore candidates
             rejections = 0
             A, B, AB_union, AB_merge = None, None, None, None
-            logger.debug(self.name + ' creating fine boundary')
+            logger.debug(full_name + ' creating fine boundary')
             self.fine_boundary = set(reduce(lambda b, a: a.union(b), self.boundary, set()))
             for candidate_nr, (i, j, distance) in enumerate(candidates):
                 A, B = self.boundary[i], self.boundary[j]
                 AB_union = A | B
-                AB_merge = self.merge(A, B, x, y, ids=batch_ids)
-                logger.debug(self.name + ' merged candidate ' + str(rejections))
+                AB_merge = self.merge(A, B, x, y, ids=batch_ids, intersecting=intersecting,
+                                      strict_cut=strict_cut, strict_join=strict_join)
+                logger.debug(full_name + ' merged candidate ' + str(rejections))
                 # Boundary without the potentially merging theories
-                non_merging_boundary = [self.boundary[k] for k in range(self.boundary_len) if k != i and k != j]
+                non_merging_boundary = [self.boundary[k] for k in range(boundary_len) if k != i and k != j]
 
                 if self.accept_merge(AB_union, AB_merge, data=tr_set, global_direction=global_direction,
                                      non_merging_boundary=non_merging_boundary, fidelity_weight=fidelity_weight,
                                      complexity_weight=complexity_weight):
                     merged = True
                     rejections_list.append(rejections)
-                    logger.debug(self.name + ' Merged candidate ' + str(rejections))
+                    logger.debug(full_name + ' Merged candidate ' + str(rejections))
                     # Boundary update: the merging theories are removed and the merged theory is inserted
                     self.boundary = [AB_merge] + non_merging_boundary
-                    self.boundary_len -= 1
+                    boundary_len -= 1
                     self.fine_boundary = set(reduce(lambda b, a: a.union(b), self.boundary, set()))
 
                     break
@@ -385,7 +415,7 @@ class GLocalX:
 
             # Callbacks
             if (iteration + 1) % callback_step == 0 and merged and callbacks is not None:
-                logger.debug(self.name + ' Callbacks... ')
+                logger.debug(full_name + ' Callbacks... ')
                 nr_rules_union, nr_rules_merge = len(AB_union), len(AB_merge)
                 coverage_union = self.evaluator.coverage(AB_union, x, ids=batch_ids)
                 coverage_merge = self.evaluator.coverage(AB_merge, x, ids=batch_ids)
@@ -407,18 +437,19 @@ class GLocalX:
                              union_mean_rules_len=union_mean_rules_len, merge_mean_rules_len=merge_mean_rules_len,
                              union_std_rules_len=union_std_rules_len, merge_std_rules_len=merge_std_rules_len,
                              fine_boundary_size=fine_boundary_size, merged=merged,
+                             name=full_name,
                              rejections=rejections)
 
             # Iteration update
             iteration += 1
 
         # Final rule dump
-        logger.debug(self.name + ' Dumping ')
-        final_rule_dump_callback(self, merged=False)
+        logger.debug(full_name + ' Dumping ')
+        final_rule_dump_callback(self, merged=False, name=full_name)
 
         # Pickle this instance
         if pickle_this:
-            with open(self.name + '.glocalx.pickle', 'wb') as log:
+            with open(full_name + '.glocalx.pickle', 'wb') as log:
                 pickle.dump(self, log)
 
         return self
@@ -453,17 +484,20 @@ class GLocalX:
             rules_1 = [r for r in fine_boundary if r.consequence == 1]
             fidelities_0 = [evaluator_.binary_fidelity(rule, x, y, default=default) for rule in rules_0]
             fidelities_1 = [evaluator_.binary_fidelity(rule, x, y, default=default) for rule in rules_1]
-            if isinstance(alpha, float):
+            if is_percentile:
                 lower_bound_0 = np.percentile(list(set(fidelities_0)), alpha) if is_percentile else alpha
                 lower_bound_1 = np.percentile(list(set(fidelities_1)), alpha) if is_percentile else alpha
 
                 fine_boundary_0 = [rule for rule, fidelity in zip(rules_0, fidelities_0) if fidelity >= lower_bound_0]
                 fine_boundary_1 = [rule for rule, fidelity in zip(rules_1, fidelities_1) if fidelity >= lower_bound_1]
-            else:
+            elif isinstance(alpha, int):
                 fine_boundary_0 = sorted(zip(rules_0, fidelities_0), key=lambda el: el[1])[-alpha // 2:]
                 fine_boundary_1 = sorted(zip(rules_0, fidelities_1), key=lambda el: el[1])[-alpha // 2:]
                 fine_boundary_0 = [rule for rule, _ in fine_boundary_0]
                 fine_boundary_1 = [rule for rule, _ in fine_boundary_1]
+            else:
+                fine_boundary_0 = [rule for rule, fidelity in zip(rules_0, fidelities_0) if fidelity >= alpha]
+                fine_boundary_1 = [rule for rule, fidelity in zip(rules_1, fidelities_1) if fidelity >= alpha]
 
             return fine_boundary_0 + fine_boundary_1
 

@@ -204,7 +204,6 @@ def run(rules, tr, oracle=None, generate=None,
 
     logger.info('Storing output rules ' + name + '...')
     output_rules = glocalx.rules(alpha, tr_set)
-    glocalx.rules(75, tr_set, is_percentile=True)
 
     jsonized_rules = [rule.json() for rule in output_rules]
     with open(name + '.rules.glocalx.alpha=' + str(alpha) + '.json', 'w') as log:

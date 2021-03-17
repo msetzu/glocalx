@@ -153,6 +153,15 @@ The `evaluators.validate` function provides a simple interface for validation. I
 
 GLocalX has a strict format on input data. It accepts tabular datasets and binary classification tasks. You can find a dummy example for each of these formats in `/data/dummy/`.
 
+#### Local rules
+
+We provide an integration with [Lore](https://github.com/riccotti/LORE) rules through the `loaders` module.
+To convert Lore rules to GLocalX rules, use the provided `loaders.lore.lore_to_glocalx(json_file, info_file)` function. `json_file` should be the path to a json with Lore's rules, and `info_file` should be the path to a JSON dictionary holding the class values (key `class_names`) and a list of the features' names (key `feature_names`).
+You can find dummy examples of the info file in [data/loaders/adult_info.json](https://github.com/msetzu/glocalx/blob/main/data/loaders/adult_info.json).
+
+More examples on other local rule extractors to follow.
+
+
 #### Rules [`/data/dummy/dummy_rules.json`]
 
 Local rules are to be stored in a `JSON` format:
@@ -185,11 +194,25 @@ Training data is to be stored in a csv, comma-separated format with features nam
 
 ---
 
-## Docs
+## Docs and reference
 
 You can find the software documentation in the `/html/` folder and a powerpoint presentation on GLocalX can be found [here](https://docs.google.com/presentation/d/12Nv2MRlvpQfwk9A8TeN6QQwnVUKgE00V-ZWGS2FV5p8/edit?usp=sharing).
 
-The work is currently under submission, we'll update with a citable reference and online documentation as soon as it is published.
+You can cite this work with
+```
+@article{SETZU2021103457,
+  title = {GLocalX - From Local to Global Explanations of Black Box AI Models},
+  journal = {Artificial Intelligence},
+  volume = {294},
+  pages = {103457},
+  year = {2021},
+  issn = {0004-3702},
+  doi = {https://doi.org/10.1016/j.artint.2021.103457},
+  url = {https://www.sciencedirect.com/science/article/pii/S0004370221000084},
+  author = {Mattia Setzu and Riccardo Guidotti and Anna Monreale and Franco Turini and Dino Pedreschi and Fosca Giannotti},
+  keywords = {Explainable AI, Global explanation, Local explanations, Interpretable models, Open the black box},
+}
+```
 
 
 

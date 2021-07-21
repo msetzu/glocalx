@@ -195,7 +195,7 @@ class GLocalX:
 
         cut_rules = set()
         default = int(y.mean().round())
-        # Set ids to None to measure global fidelity_weight
+        # Set ids to None to measure global fidelity
         fidelities = np.array([self.evaluator.binary_fidelity(rule, x, y, default=default, ids=None)
                                for rule in conflicting_group_list])
         dominant_rule = conflicting_group_list[np.argmax(fidelities).item(0)]

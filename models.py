@@ -1,6 +1,8 @@
 """Models to score, mainly rules. A_ model should implement the `Unit` interface."""
+import itertools
 import json
 from copy import deepcopy
+from functools import reduce
 from math import floor
 
 from scipy.spatial.distance import euclidean
@@ -305,60 +307,32 @@ class Rule(Unit):
         Returns:
             set: New rule(s) with different premises and same consequence as self.
         """
-        premises_in_common = self.features & other.features
+        features_in_common = list(self.features & other.features)
+        features_not_in_common = list(other.features - self.features)
+        features = features_in_common + features_not_in_common
 
-        negated_premises = {}
-        additional_rules_nr = 0
-        for f in premises_in_common:
+        premises_values = list()
+        # compute subtracted premises
+        for f in features_in_common:
             self_a, self_b, other_a, other_b = self[f][0], self[f][1], other[f][0], other[f][1]
 
             # strong included in the weak, split the weak in two
             if self_a <= other_a <= other_b <= self_b:
-                negated_premises[f] = [(self_a, other_a), (other_b, self_b)]
-                additional_rules_nr += 1
+                premises_values.append([(self_a, other_a), (other_b, self_b)])
             # weak shifted to the left
             elif other_a < self_a < other_b <= self_b:
-                negated_premises[f] = (other_b, self_b)
+                premises_values.append([(other_b, self_b)])
             # weak shifted to the right
             elif self_a <= other_a <= self_b <= other_b:
-                negated_premises[f] = (self_a, other_a)
+                premises_values.append([(self_a, other_a)])
             # weak included in strong
             elif other_a < self_a <= self_b <= other_b:
-                negated_premises[f] = None
-
-        new_rules = [Rule(premises={}, consequence=other.consequence, names=self.names)
-                     for _ in range(additional_rules_nr + 1)]
-
-        # Preserve features in the weak rule, but not in the strong
-        for f, val in other:
-            if f not in negated_premises:
-                for rule in new_rules:
-                    rule[f] = val
-                    rule.features.add(f)
-
-        # Cut according to the negated submissive ranges
-        for f in negated_premises.keys():
-            if f in negated_premises:
-                if negated_premises[f] is None:
-                    for rule in new_rules:
-                        if f in rule:
-                            del rule[f]
-                            rule.features = rule.features - {f}
-                elif isinstance(negated_premises[f], list):
-                    # First half of the rules with first value
-                    for rule in new_rules[:floor(additional_rules_nr / 2)]:
-                        rule[f] = negated_premises[f][0]
-                        rule.features.add(f)
-                    # Second half of the rules with second value
-                    for rule in new_rules[floor(additional_rules_nr / 2):]:
-                        rule[f] = negated_premises[f][1]
-                        rule.features.add(f)
-                else:
-                    for rule in new_rules:
-                        rule[f] = negated_premises[f]
-                        rule.features.add(f)
-
-        new_rules = set(new_rules)
+                continue
+        # premises not in common remain as-is
+        premises_values += [[other[f]] for f in features_not_in_common]
+        premises_values = list(itertools.product(*premises_values))
+        new_rules = {Rule(premises={f: val for f, val in zip(features, premises_values)}, consequence=other.consequence,
+                          names=self.names) for premises_values in premises_values}
 
         return new_rules
 

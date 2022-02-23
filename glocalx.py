@@ -479,7 +479,7 @@ class GLocalX:
 
         if data is None:
             return fine_boundary
-        elif alpha is not None and len(fine_boundary) > 0 and strategy == 'fidelity':
+        elif alpha is not None and len(fine_boundary) > 0:
             x, y = data[:, :-1], data[:, -1].astype(int)
             default = int(y.mean().round())
             rules_0 = [r for r in fine_boundary if r.consequence == 0]
